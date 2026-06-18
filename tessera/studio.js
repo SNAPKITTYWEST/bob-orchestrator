@@ -60,6 +60,8 @@ const traceNode = document.getElementById('trace')
 const esolangSourceNode = document.getElementById('esolang-source')
 const cipherOutputNode = document.getElementById('cipher-output')
 const glowSealNode = document.getElementById('glow-seal')
+const magmaGlyphs = ['🧠', '⚡', '🪨', '🔗', '🎯', '🛡️', '🔍']
+const emojiOpcodes = ['🧠', '⚡', '🪨', '🔗', '🎯', '🛡️', '🔍', '🌒', '🜂', '🜁', '🜄', '🜃', '✦', '◇', '◈', '⬡']
 let cleanHash = ''
 let currentManifest = null
 let currentEsolang = 'brainfuck'
@@ -300,8 +302,8 @@ async function forge() {
   const cipher = document.getElementById('cipher').value
   const key = document.getElementById('cipher-key').value || 'SNAPKITTY'
   const esolang = generateEsolang(currentEsolang, message)
-  const encrypted = applyCipher(esolang.source, cipher, key)
   const sourceHash = await sha256(esolang.source)
+  const encrypted = applyCipher(esolang.source, cipher, key, { language: esolang.name, message, sourceHash })
   const cipherHash = await sha256(encrypted)
   const fusedHash = await sha256(`${currentEsolang}|${message}|${cipher}|${key}|${sourceHash}|${cipherHash}`)
   const tessera = wrapEsolangAsTessera(esolang, fusedHash)
@@ -313,6 +315,7 @@ async function forge() {
     `SOURCE_HASH: ${sourceHash}`,
     `CIPHER_HASH: ${cipherHash}`,
     `FUSED_GLOW_SEAL: ${fusedHash}`,
+    `MAGMA_GLYPHS: ${magmaGlyphs.join('')}`,
     '',
     encrypted
   ].join('\n')
@@ -397,8 +400,13 @@ function generateEsolang(language, message) {
   return { name: 'Whitespace', source, visualToken: 'invisible' }
 }
 
-function applyCipher(text, cipher, key) {
+function applyCipher(text, cipher, key, meta = {}) {
   if (cipher === 'reverse') return [...text].reverse().join('')
+  if (cipher === 'unicode') return toUnicodeCodepoints(text)
+  if (cipher === 'reverse_unicode') return toReverseUnicode(text)
+  if (cipher === 'magma') return toMagmaSeal(text, key, meta)
+  if (cipher === 'macro_strings') return toMacroStrings(text, key, meta)
+  if (cipher === 'emoji_code') return toEmojiCode(text, key, meta)
   if (cipher === 'xor') {
     const bytes = [...text].map((char, index) => char.charCodeAt(0) ^ key.charCodeAt(index % key.length))
     return chunk(bytes.map((byte) => byte.toString(16).padStart(2, '0')).join(''), 64).join('\n')
@@ -408,6 +416,74 @@ function applyCipher(text, cipher, key) {
   }
   const amount = [...key].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 26
   return [...text].map((char) => shiftChar(char, amount)).join('')
+}
+
+function toUnicodeCodepoints(text) {
+  return [...text].map((char) => {
+    const code = char.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')
+    return `U+${code}`
+  }).join(' ')
+}
+
+function toReverseUnicode(text) {
+  return [...text].reverse().map((char) => {
+    const code = char.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')
+    return `${char === '\n' ? '↵' : char}⟦U+${code}⟧`
+  }).join(' ')
+}
+
+function toMagmaSeal(text, key, meta) {
+  const unicode = toUnicodeCodepoints(text)
+  const reverseUnicode = toReverseUnicode(text)
+  const glyphLine = magmaGlyphs.join('')
+  return [
+    '╔════════════════ MAGMA SEAL ════════════════╗',
+    `║ GLYPHS        ${glyphLine}`,
+    `║ LANGUAGE      ${meta.language || 'unknown'}`,
+    `║ MESSAGE       ${meta.message || 'sealed art'}`,
+    `║ KEY           ${key}`,
+    `║ SOURCE_HASH   ${meta.sourceHash || 'pending'}`,
+    '╠════════════ FORWARD UNICODE ═══════════════╣',
+    unicode,
+    '╠════════════ REVERSE UNICODE ═══════════════╣',
+    reverseUnicode,
+    '╠════════════ ORIGINAL SOURCE ═══════════════╣',
+    text,
+    '╚════════════════════════════════════════════╝'
+  ].join('\n')
+}
+
+function toMacroStrings(text, key, meta) {
+  const macroName = (meta.language || 'ESOLANG').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '')
+  const lines = text.split('\n')
+  const body = lines.map((line, index) => {
+    const escaped = line.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+    return `@${macroName}_LINE_${String(index).padStart(2, '0')}("${escaped}")`
+  }).join('\n')
+  return [
+    `@MAGMA_BEGIN("${macroName}", key="${key}")`,
+    '@MACRO_GLYPHS("🧠⚡🪨🔗🎯🛡️🔍")',
+    `@SOURCE_HASH("${meta.sourceHash || 'pending'}")`,
+    body,
+    `@MAGMA_END("${macroName}")`
+  ].join('\n')
+}
+
+function toEmojiCode(text, key, meta) {
+  const keyed = [...key].reduce((sum, char) => sum + char.codePointAt(0), 0)
+  const encoded = [...text].map((char, index) => {
+    const code = char.codePointAt(0)
+    const left = emojiOpcodes[(code + keyed + index) % emojiOpcodes.length]
+    const right = emojiOpcodes[(code + index * 7) % emojiOpcodes.length]
+    return `${left}${right}${code.toString(16).toUpperCase().padStart(4, '0')}`
+  })
+  return [
+    `🧠 EMOJI_CODE: ${meta.language || 'unknown'}`,
+    `🔗 KEY: ${key}`,
+    `🪨 SOURCE_HASH: ${meta.sourceHash || 'pending'}`,
+    `⚡ STREAM:`,
+    chunk(encoded.join(' '), 74).join('\n')
+  ].join('\n')
 }
 
 function shiftChar(char, amount) {
@@ -424,7 +500,7 @@ function wrapEsolangAsTessera(forgeResult, fusedHash) {
       |                              |
      (==)                           (==)
       |                              |
-< HASH-${fusedHash.slice(0, 8).toUpperCase()} > -----> | WORM-SEAL |
+< MAGMA-${fusedHash.slice(0, 8).toUpperCase()} > -----> | WORM-SEAL |
 `.trim()
 }
 
@@ -432,6 +508,7 @@ function renderGlowSeal(forgeResult) {
   const hash = forgeResult.fusedHash
   const rings = chunk(hash.slice(0, 48), 6)
   const glyphs = forgeResult.esolang.source.replace(/\s/g, '').slice(0, 80)
+  const magma = magmaGlyphs.join('')
   const colors = ['#00ff88', '#f97316', '#7c3aed', '#8bd4ff']
   const ringSvg = rings.map((part, index) => {
     const radius = 44 + index * 18
@@ -451,8 +528,9 @@ function renderGlowSeal(forgeResult) {
       ${ringSvg}
       <path d="M180 42 L306 180 L180 318 L54 180 Z" fill="none" stroke="#00ff88" stroke-width="2"/>
       <text x="180" y="96" text-anchor="middle" class="seal-title">${escapeXml(forgeResult.esolang.name)}</text>
+      <text x="180" y="122" text-anchor="middle" class="magma-line">${escapeXml(magma)}</text>
       ${glyphText}
-      <text x="180" y="284" text-anchor="middle">${hash.slice(0, 24)}...</text>
+      <text x="180" y="284" text-anchor="middle">${escapeXml(forgeResult.cipher.toUpperCase())} ${hash.slice(0, 20)}...</text>
     </g>
   </svg>`
 }

@@ -407,41 +407,53 @@ export function extractConcepts(sentence) {
   return found
 }
 
-// Build a sovereign answer from extracted concepts
-export function sovereignAnswer(sentence, oracleWord, emojiSeq) {
-  const concepts = extractConcepts(sentence)
-
-  if (concepts.length === 0) {
-    return `Oracle: "${oracleWord}" ${emojiSeq} — no known concept in the dictionary. The system holds silence. Ask about: life, truth, wisdom, freedom, love, purpose, justice, trust, time, soul.`
-  }
-
-  const primary = concepts[0]
-  const e       = primary.entry
-  const em      = primary.emoji || emojiSeq
-
-  // Build the layered answer
+// Build the answer block for a single dictionary entry
+function entryAnswer(word, entry, emoji, oracleWord) {
+  const e   = entry
+  const em  = emoji || '◇'
   const lines = []
 
-  // Sovereign definition first — this is BOB's own answer
-  lines.push(`${primary.word.toUpperCase()} ${em}`)
+  lines.push(`${word.toUpperCase()} ${em}`)
   lines.push('')
   lines.push(`Sovereign: ${e.sovereign}`)
   lines.push('')
 
-  // Etymology layers
-  if (e.arabic)   lines.push(`Arabic  ${e.arabic.word} (${e.arabic.trans}) — ${e.arabic.root}`)
-  if (e.hebrew)   lines.push(`Hebrew  ${e.hebrew.word} (${e.hebrew.trans}) — ${e.hebrew.root}`)
-  if (e.greek)    lines.push(`Greek   ${e.greek.word} (${e.greek.trans}) — ${e.greek.note}`)
+  if (e.arabic)   lines.push(`Arabic    ${e.arabic.word} (${e.arabic.trans}) — ${e.arabic.root}`)
+  if (e.hebrew)   lines.push(`Hebrew    ${e.hebrew.word} (${e.hebrew.trans}) — ${e.hebrew.root}`)
+  if (e.greek)    lines.push(`Greek     ${e.greek.word} (${e.greek.trans}) — ${e.greek.note || e.greek.root || ''}`)
+  if (e.egyptian) lines.push(`Egyptian  ${e.egyptian.name} — ${e.egyptian.note}`)
   if (e.enochian) lines.push(`Enochian  ${e.enochian.aethyr} · ${e.enochian.name}`)
-  lines.push(`Oracle word: "${oracleWord}" · HolyC: ${e.holyc} · Abjad: ${e.abjad}`)
-
-  // If multiple concepts found, reference them
-  if (concepts.length > 1) {
-    lines.push('')
-    lines.push(`Also present: ${concepts.slice(1).map(c => `${c.word} ${c.emoji||'◇'}`).join('  ')}`)
-  }
+  lines.push(`Oracle: "${oracleWord}" · HolyC: ${e.holyc} · Abjad: ${e.abjad}`)
 
   return lines.join('\n')
+}
+
+// Direct oracle word answer — bypasses sentence parsing, uses the word itself
+export function oracleAnswer(word, emojiSeq) {
+  const result = lookup(word.toLowerCase())
+  if (!result) return null
+  return entryAnswer(result.word, result.entry, result.emoji || emojiSeq, word)
+}
+
+// Build a sovereign answer from a sentence — extracts concepts from the input
+export function sovereignAnswer(sentence, oracleWord, emojiSeq) {
+  const concepts = extractConcepts(sentence)
+
+  if (concepts.length === 0) {
+    // Try treating the whole sentence as a single lookup (handles short words like "nun")
+    const direct = lookup(sentence.toLowerCase().trim())
+    if (direct) return entryAnswer(direct.word, direct.entry, direct.emoji || emojiSeq, oracleWord)
+    return null  // caller handles the fallback
+  }
+
+  const primary = concepts[0]
+  let out = entryAnswer(primary.word, primary.entry, primary.emoji || emojiSeq, oracleWord)
+
+  if (concepts.length > 1) {
+    out += `\n\nAlso present: ${concepts.slice(1).map(c => `${c.word} ${c.emoji||'◇'}`).join('  ')}`
+  }
+
+  return out
 }
 
 // ── CLI test ──────────────────────────────────────────────────────────────────

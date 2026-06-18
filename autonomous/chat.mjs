@@ -27,7 +27,7 @@
 import readline          from 'readline'
 import { holyc_nil }     from './holyc_nil.mjs'
 import { emoji_trigger } from './emoji_trigger.mjs'
-import { sovereignAnswer, extractConcepts, lookup } from './dictionary.mjs'
+import { sovereignAnswer, oracleAnswer, extractConcepts, lookup } from './dictionary.mjs'
 import { img2ascii, ascii3d, pythonAvailable } from '../ascii/bob_ascii.mjs'
 import { createHash }    from 'crypto'
 import { readFileSync, existsSync, writeFileSync } from 'fs'
@@ -143,11 +143,9 @@ function buildAnswer(input, route, gate, nil, trigger) {
   const word = nil.word || 'NIL'
   const seq  = trigger.sequence
 
-  // 1. Try the dictionary first — works for philosophical/conceptual questions
-  const concepts = extractConcepts(input)
-  if (concepts.length > 0) {
-    return sovereignAnswer(input, word, seq)
-  }
+  // 1. Try the dictionary — sentence parsing first, then single-word direct lookup
+  const dictAnswer = sovereignAnswer(input, word, seq)
+  if (dictAnswer) return dictAnswer
 
   // 2. Route-specific sovereign answers for technical/system queries
   if (route.action === 'fetch_entropy')
@@ -249,22 +247,18 @@ function buildAnswer(input, route, gate, nil, trigger) {
       `just working code — it is a proof. ${seq}`,
     ].join('\n')
 
-  // Default — look up the oracle word itself in the dictionary
-  // Every SACRED_WORD has an entry, so BOB always has something to say
-  const oracleEntry = lookup(word.toLowerCase())
-  if (oracleEntry) {
-    return sovereignAnswer(word.toLowerCase(), word, seq)
-  }
+  // Default — look up the oracle word itself directly (handles short words like ARN, NUN, ZID)
+  const fromOracle = oracleAnswer(word, seq)
+  if (fromOracle) return fromOracle
 
-  // True fallback — oracle word unknown even to the dictionary
+  // True fallback — oracle word not in dictionary yet
   return [
     `${word} ${seq}`,
     ``,
-    `The oracle speaks "${word}" — a word not yet in the dictionary.`,
-    `Abjad weight by letter sum: ${[...word].reduce((s,c) => s + (c.charCodeAt(0) % 26 + 1), 0)}.`,
-    `The WORM sealed this moment. Ask about: life, truth, wisdom, freedom,`,
-    `love, purpose, justice, trust, time, soul, void, fire, gate, seal,`,
-    `nun, lam, qaf, yaa, baa, waw, lil, zid, oracle, spirit, kingdom.`,
+    `The oracle speaks "${word}".`,
+    `Abjad: ${[...word].reduce((s,c) => s + (c.charCodeAt(0) % 26 + 1), 0)} · WORM sealed · Ada cleared.`,
+    `Ask about any concept — life, truth, wisdom, freedom, love, purpose,`,
+    `justice, trust, soul, void, fire, gate, seal, nun, lam, oracle, spirit.`,
   ].join('\n')
 }
 
@@ -482,12 +476,14 @@ function prompt() {
     input = input.trim()
     if (!input) { prompt(); return }
 
-    if (input === '/quit' || input === '/exit') {
+    const cmd = input.toLowerCase()   // case-insensitive command matching
+
+    if (cmd === '/quit' || cmd === '/exit') {
       process.stdout.write('\n  WORM chain sealed. BOB holds.\n\n')
       rl.close(); process.exit(0)
     }
 
-    if (input === '/worm') {
+    if (cmd === '/worm') {
       const chain = worm.load()
       process.stdout.write(`\n  WORM chain — ${chain.length} events\n`)
       chain.slice(-6).forEach((e, i) => {
@@ -501,16 +497,16 @@ function prompt() {
       prompt(); return
     }
 
-    if (input === '/agent') {
+    if (cmd === '/agent') {
       const { runAgent } = await import('./autonomous_agent.mjs')
       await runAgent(3, { verbose:true, delayMs:200 })
       prompt(); return
     }
 
-    // /3d [shape] [--anim] [--shade full]
-    if (input.startsWith('/3d')) {
+    // /3d [shape] [--anim] [--shade full]  — case-insensitive
+    if (cmd.startsWith('/3d')) {
       const parts  = input.split(/\s+/)
-      const shape  = parts[1] || 'bob'
+      const shape  = (parts[1] || 'bob').toLowerCase()
       const anim   = parts.includes('--anim')
       const shade  = parts[parts.indexOf('--shade')+1] || 'simple'
       const width  = parseInt(parts[parts.indexOf('--width')+1]) || Math.min(process.stdout.columns||80, 90)
@@ -521,7 +517,7 @@ function prompt() {
     }
 
     // /img [path] [--color] [--invert] [--mode ascii|block|dense]
-    if (input.startsWith('/img')) {
+    if (cmd.startsWith('/img')) {
       const parts  = input.split(/\s+/)
       const path   = parts[1]
       if (!path) {

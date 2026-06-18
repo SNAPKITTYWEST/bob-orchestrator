@@ -1,0 +1,33 @@
+{
+  "name": "@snapkitty/bob-orchestrator",
+  "version": "0.1.0",
+  "description": "BOB — sovereign orchestrator. Lean 4 proof gates + Ada contracts + Mamba SSM injections + Prolog kernel. Not an LLM wrapper. A reasoning machine.",
+  "type": "module",
+  "main": "core/bob.mjs",
+  "scripts": {
+    "start":      "node core/bob.mjs",
+    "test":       "node core/bob.mjs --test",
+    "lean-check": "lean lean4/SovereignGate.lean",
+    "demo":       "node bridge/demo.mjs"
+  },
+  "dependencies": {
+    "@snapkitty/mcp-server": "file:../snapkitty-mcp"
+  },
+  "keywords": [
+    "sovereign",
+    "orchestrator",
+    "mamba",
+    "ssm",
+    "lean4",
+    "ada",
+    "prolog",
+    "nemotron",
+    "bob"
+  ],
+  "author": "SnapKitty Collective <collective@snapkitty.ai>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SNAPKITTYWEST/bob-orchestrator.git"
+  }
+}

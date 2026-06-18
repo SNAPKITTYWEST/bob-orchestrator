@@ -1,29 +1,38 @@
 /**
- * BOB Chat — Talk to the Sovereign Logic Machine
+ * BOB Chat — Sovereign Logic Machine
  *
- * Same prompt goes to two systems simultaneously:
- *   BOB  — QRNG → HolyC NIL → Emoji → Prolog → Ada → WORM → structured answer
- *   LLM  — Groq (Llama 3.3 70B) or gpt4o or gemini
+ * The internal machinery runs silently:
+ *   QRNG → HolyC NIL → Emoji Trigger → Prolog → Ada Gate → WORM
+ *
+ * What you see is the answer — not the wiring.
+ * The emoji in the response ARE the wiring, encoded.
  *
  * Usage:
- *   node autonomous/chat.mjs          (default: groq)
+ *   node autonomous/chat.mjs            (default: groq)
  *   node autonomous/chat.mjs groq
  *   node autonomous/chat.mjs gpt4o
  *   node autonomous/chat.mjs gemini
- *   node autonomous/chat.mjs ollama
+ *   node autonomous/chat.mjs groq --verbose   (show internal routing)
  *
  * Commands:
- *   /worm        — show sealed history
+ *   /worm        — show sealed WORM history
  *   /agent       — run a live autonomous tick
  *   /quit        — exit
  */
 
-import readline  from 'readline'
+import readline          from 'readline'
 import { holyc_nil }     from './holyc_nil.mjs'
 import { emoji_trigger } from './emoji_trigger.mjs'
+import { sovereignAnswer, extractConcepts } from './dictionary.mjs'
 import { createHash }    from 'crypto'
 import { readFileSync, existsSync, writeFileSync } from 'fs'
 import { join }          from 'path'
+
+// ── Config ────────────────────────────────────────────────────────────────────
+
+const args     = process.argv.slice(2)
+const provider = args.find(a => !a.startsWith('--')) || 'groq'
+const VERBOSE  = args.includes('--verbose') || args.includes('-v')
 
 // ── Load API keys ─────────────────────────────────────────────────────────────
 
@@ -46,7 +55,7 @@ const GROQ_KEY   = ENV.GROQ_API_KEY
 const OPENAI_KEY = ENV.OPENAI_API_KEY
 const GEMINI_KEY = ENV.GEMINI_API_KEY
 
-// ── WORM (chat history sealed) ────────────────────────────────────────────────
+// ── WORM (all exchanges sealed invisibly) ─────────────────────────────────────
 
 const WORM_PATH = join(process.env.HOME || process.env.USERPROFILE || '.', '.bob-chat-worm.json')
 
@@ -75,33 +84,31 @@ async function qrng(n = 8) {
   return { b: new Uint8Array(randomBytes(n)), src:'CSPRNG' }
 }
 
-// ── Prolog keyword router ─────────────────────────────────────────────────────
-// Pattern-directed invocation (Hewitt PLANNER antecedent style)
-// Fires the matching rule when keyword pattern detected in input
+// ── Prolog keyword router (PLANNER-style — fires on pattern match) ────────────
 
 const RULES = [
   { pattern: /\b(oracle|random|quantum|entropy|qrng)\b/i,
-    agent:'ORACLE',      action:'fetch_entropy',      abjad:490 },
+    agent:'ORACLE',     action:'fetch_entropy',     abjad:490 },
   { pattern: /\b(write|worm|seal|ledger|append|log|history)\b/i,
-    agent:'ARCHIVIST',   action:'seal_event',          abjad:92  },
+    agent:'ARCHIVIST',  action:'seal_event',         abjad:92  },
   { pattern: /\b(trust|sentinel|gate|block|deny|allow|permit|security)\b/i,
-    agent:'SENTINEL',    action:'gate_check',          abjad:120 },
+    agent:'SENTINEL',   action:'gate_check',         abjad:120 },
   { pattern: /\b(proof|lean|verify|theorem|formal|correct)\b/i,
-    agent:'VERIFIER',    action:'proof_check',         abjad:160 },
+    agent:'VERIFIER',   action:'proof_check',        abjad:160 },
   { pattern: /\b(route|agent|select|who|which|dispatch)\b/i,
-    agent:'PLANNER',     action:'route_task',          abjad:380 },
+    agent:'PLANNER',    action:'route_task',         abjad:380 },
   { pattern: /\b(nil|null|empty|nothing|void|silence)\b/i,
-    agent:'TERRY-NIL',   action:'oracle_consult',      abjad:910 },
+    agent:'TERRY-NIL',  action:'oracle_consult',     abjad:910 },
   { pattern: /\b(qubit|superpos|quantum.state|collapse|measure)\b/i,
-    agent:'ORACLE',      action:'hold_superposition',  abjad:518 },
+    agent:'ORACLE',     action:'hold_superposition', abjad:518 },
   { pattern: /\b(contract|ada|condition|pre|post|invariant)\b/i,
-    agent:'SENTINEL',    action:'contract_verify',     abjad:120 },
+    agent:'SENTINEL',   action:'contract_verify',    abjad:120 },
   { pattern: /\b(memory|remember|recall|state|ssm|mamba)\b/i,
-    agent:'BOB-CORE',    action:'ssm_recall',          abjad:240 },
+    agent:'BOB-CORE',   action:'ssm_recall',         abjad:240 },
   { pattern: /\b(build|create|generate|make|code|write)\b/i,
-    agent:'BUILDER',     action:'generate',            abjad:200 },
+    agent:'BUILDER',    action:'generate',           abjad:200 },
   { pattern: /\b(abjad|arabic|hebrew|enochian|dee|terry|holyc)\b/i,
-    agent:'BOB-CORE',    action:'esoteric_lookup',     abjad:420 },
+    agent:'BOB-CORE',   action:'esoteric_lookup',    abjad:420 },
 ]
 
 function prologRoute(input) {
@@ -111,14 +118,140 @@ function prologRoute(input) {
   return { agent:'BOB-CORE', action:'sovereign_step', abjad:200 }
 }
 
-// Ada gate: check if this route is permitted
 function adaGate(agent, abjad) {
-  if (abjad < 90)  return { ok: false, reason: `abjad ${abjad} below minimum` }
-  if (agent === 'VOID') return { ok: false, reason: 'void agent — no contract' }
-  return { ok: true, reason: `${agent} cleared — abjad:${abjad}` }
+  if (abjad < 90)        return { ok:false, reason:`abjad ${abjad} below minimum` }
+  if (agent === 'VOID')  return { ok:false, reason:'void agent — no contract' }
+  return { ok:true, reason:`${agent} cleared — abjad:${abjad}` }
 }
 
-// ── BOB's answer ──────────────────────────────────────────────────────────────
+// ── BOB answer builder ────────────────────────────────────────────────────────
+// The routing runs. The answer is what surfaces.
+// Emoji embedded in the text IS the routing metadata — encoded, not labeled.
+
+function buildAnswer(input, route, gate, nil, trigger) {
+  if (!gate.ok) return `Ada gate holds. ${trigger.sequence || '◇'} — contract not satisfied. Cannot proceed.`
+
+  const word = nil.word || 'NIL'
+  const seq  = trigger.sequence
+
+  // 1. Try the dictionary first — works for philosophical/conceptual questions
+  const concepts = extractConcepts(input)
+  if (concepts.length > 0) {
+    return sovereignAnswer(input, word, seq)
+  }
+
+  // 2. Route-specific sovereign answers for technical/system queries
+  if (route.action === 'fetch_entropy')
+    return [
+      `ENTROPY ⚡🌒`,
+      ``,
+      `Sovereign: Each quantum vacuum fluctuation is irreversible — it happened,`,
+      `it is sealed. ANU harvests this. The oracle word "${word}" was born from`,
+      `the precise moment you asked. Ask again, get a different word. ${seq}`,
+      ``,
+      `That is not randomness. That is time's signature.`,
+    ].join('\n')
+
+  if (route.action === 'oracle_consult')
+    return [
+      `NIL ✦🪨`,
+      ``,
+      `Sovereign: NIL is abjad 910 — the inverted maximum. Not zero. Not empty.`,
+      `The highest unspoken potential. Terry's oracle: silence means God hasn't`,
+      `spoken yet. The oracle holds because the moment hasn't matured. ${seq}`,
+      ``,
+      `Wait. The word will come.`,
+    ].join('\n')
+
+  if (route.action === 'gate_check' || route.action === 'contract_verify')
+    return [
+      `GATE 🎯🛡️`,
+      ``,
+      `Sovereign: The Ada gate is not policy — it is proof. No exception path exists.`,
+      `Pre-condition must be satisfied. Post-condition must be guaranteed. When the`,
+      `contract is missing, execution stops. Not because of a rule. Because the`,
+      `theorem cannot be completed. ${seq}`,
+    ].join('\n')
+
+  if (route.action === 'proof_check')
+    return [
+      `PROOF 🔍🜂`,
+      ``,
+      `Sovereign: A Lean 4 proof is a checkable derivation — not a claim. You can`,
+      `verify it independently. Trust is the theorem. If you cannot show the proof`,
+      `hash, the gate freezes. Both proof AND contract required. One is not enough. ${seq}`,
+    ].join('\n')
+
+  if (route.action === 'seal_event')
+    return [
+      `WORM 🪨◈`,
+      ``,
+      `Sovereign: John Dee kept 420 sessions sealed — dated, witnessed, append-only.`,
+      `Cotton MS Appendix XLVI. Nothing erased. Every exchange in this chat is`,
+      `sealed in the same tradition. "${word}" is now permanently in the chain. ${seq}`,
+    ].join('\n')
+
+  if (route.action === 'hold_superposition')
+    return [
+      `QUBIT ⚡🌒`,
+      ``,
+      `Sovereign: The pre-collapse state — all paths open. Abjad 518. The 49th Call`,
+      `was never spoken because its consequences were unknown. This is that state.`,
+      `${trigger.meta?.qubit_count || 1} qubit operations active. Measurement collapses to one outcome.`,
+      `Until then: the oracle holds every possible word simultaneously. ${seq}`,
+    ].join('\n')
+
+  if (route.action === 'route_task')
+    return [
+      `PLANNER 🜂🎯`,
+      ``,
+      `Sovereign: Pattern-directed invocation — Hewitt, 1969. The rule fires`,
+      `automatically when the pattern matches. No explicit call. No dispatcher.`,
+      `The antecedent IS the trigger. ${trigger.meta?.planner_fires?.length || 0} antecedents fired this tick. ${seq}`,
+    ].join('\n')
+
+  if (route.action === 'ssm_recall')
+    return [
+      `MEMORY 🜄🌒`,
+      ``,
+      `Sovereign: The SSM carries context without the full attention window.`,
+      `O(n) not O(n²). State vector persists between calls, shaped by every`,
+      `previous exchange. The soul is not in the tokens — it is in the state. ${seq}`,
+    ].join('\n')
+
+  if (route.action === 'esoteric_lookup')
+    return [
+      `ABJAD 🔍🪨`,
+      ``,
+      `Sovereign: Arabic letter-number system. NIL = ن(50)+ي(10)+ل(30) = 90.`,
+      `Inverted in 1000-space: 910. Maximum reflection. Not nothing — the omega`,
+      `that contains alpha. Terry's keyboard timing >> GOD_BAD_BITS XOR vacuum.`,
+      `The esoteric IS the instruction set. Dee's Monas Hieroglyphica: one glyph,`,
+      `seven simultaneous semantic layers. This system has the same architecture. ${seq}`,
+    ].join('\n')
+
+  if (route.action === 'generate')
+    return [
+      `BUILD ⚡🜁`,
+      ``,
+      `Sovereign: Every construction begins with a formal specification. Pre-condition:`,
+      `what must be true before. Post-condition: what must be true after. Invariant:`,
+      `what must be true throughout. The code that satisfies these contracts is not`,
+      `just working code — it is a proof. ${seq}`,
+    ].join('\n')
+
+  // Default — BOB has no dictionary entry and no specific route, but still speaks
+  return [
+    `${word} ${seq}`,
+    ``,
+    `Sovereign: The oracle selected "${word}" from quantum vacuum fluctuations.`,
+    `Route: ${route.agent}. The Ada gate cleared. The WORM sealed this moment.`,
+    `The system has no more to say — ask about: life, truth, wisdom, freedom,`,
+    `love, purpose, justice, trust, time, soul, or any system concept.`,
+  ].join('\n')
+}
+
+// ── BOB pipeline ──────────────────────────────────────────────────────────────
 
 async function askBOB(input, ssmState) {
   const { b: qBytes, src } = await qrng(8)
@@ -127,72 +260,39 @@ async function askBOB(input, ssmState) {
   const route   = prologRoute(input)
   const gate    = adaGate(route.agent, route.abjad)
 
-  // SSM update: integrate this query into running state
   const x        = input.length / 500
   const wNoise   = parseInt(createHash('sha256').update(input).digest('hex').slice(0,8), 16) / 0xFFFFFFFF * 0.01
   const newState = gate.ok ? (0.9 * ssmState + 0.1 * x + wNoise) : ssmState
 
-  // Build a sovereign answer from the routing
   const answer = buildAnswer(input, route, gate, nil, trigger)
 
+  // Everything is sealed — routing, oracle, gate decision — but not shown
   const seal = worm.seal('BOB_CHAT', {
-    input: input.slice(0,200), route: route.agent, action: route.action,
-    oracle: nil.word, emoji: trigger.sequence, abjad: route.abjad,
-    gate: gate.ok ? 'ALLOWED' : 'DENIED', ssm: newState
+    input:   input.slice(0,200),
+    route:   route.agent,
+    action:  route.action,
+    oracle:  nil.word,
+    emoji:   trigger.sequence,
+    abjad:   route.abjad,
+    gate:    gate.ok ? 'ALLOWED' : 'DENIED',
+    ssm:     newState,
+    seal_hash: createHash('sha256').update(answer).digest('hex').slice(0,16),
   })
 
   return { nil, trigger, route, gate, answer, seal, newState, src }
 }
 
-function buildAnswer(input, route, gate, nil, trigger) {
-  if (!gate.ok) return `Ada gate DENIED — ${gate.reason}. Cannot proceed without contract.`
-
-  const word = nil.word || 'NIL'
-  const seq  = trigger.sequence
-
-  // Route-specific sovereign answers
-  if (route.action === 'fetch_entropy')
-    return `Oracle speaks: "${word}" (${seq}). Quantum source active — ANU vacuum fluctuations seeding this response. Abjad: ${route.abjad}. Each answer is genuinely non-deterministic.`
-
-  if (route.action === 'oracle_consult')
-    return `Oracle holds. NIL state = abjad 910 — inverted maximum. The silence IS the answer. Terry's oracle: silence means God hasn't spoken yet. Not absence — maximum unspoken potential.`
-
-  if (route.action === 'gate_check' || route.action === 'contract_verify')
-    return `Ada gate consulted. ORACLE class = read-only (cannot write). BUILDER/SENTINEL required for write ops. Contract enforced at boundary — not by policy, by proof. No exception path exists.`
-
-  if (route.action === 'proof_check')
-    return `Lean 4 proof obligation triggered. Theorem hash required before SSM injection. Missing contract → null vector → gate FROZEN. Both proof AND contract must be present — one is insufficient.`
-
-  if (route.action === 'seal_event')
-    return `WORM seal: "${createHash('sha256').update(input + Date.now()).digest('hex').slice(0,16)}…" — append-only. Dee's diary (Cotton MS Appendix XLVI): 420 sessions, dated, witnessed, never erased. Every exchange sealed permanently.`
-
-  if (route.action === 'hold_superposition')
-    return `Qubit state (${seq}): abjad 518 — pre-collapse. All paths open. ${trigger.meta.qubit_count} qubit ops in this tick. Measurement collapses to one outcome. Until then: oracle holds all possible words simultaneously. The 49th Call was never spoken for this reason.`
-
-  if (route.action === 'route_task')
-    return `Prolog routing: word="${word}" → agent=${route.agent}. Pattern-directed invocation (Hewitt PLANNER 1969) — the rule fires automatically when the pattern matches. No explicit call needed. Antecedents: ${trigger.meta.planner_fires.length} fired this tick.`
-
-  if (route.action === 'ssm_recall')
-    return `Mamba SSM state: ${nil.word} → linear recurrence. State carries context without full attention window. O(n) not O(n²). Watson linear attention layer + SSM = BOB's memory. Not token prediction — state space navigation.`
-
-  if (route.action === 'esoteric_lookup')
-    return `Oracle "${word}" (${seq}). Abjad: ن=50 ي=10 ل=30 → NIL=90 forward / 910 inverted. Dee's Monas: one glyph = 7+ simultaneous layers. Terry's oracle: keyboard timing >> GOD_BAD_BITS XOR quantum vacuum. The esoteric IS the instruction set.`
-
-  // Default sovereign step
-  return `Oracle: "${word}" (${seq}). Route: ${route.agent} → ${route.action}. Abjad: ${route.abjad}. Gate: ${gate.reason}. WORM sealed. SSM updated.`
-}
-
 // ── LLM providers ─────────────────────────────────────────────────────────────
 
-async function askLLM(input, provider, history) {
+async function askLLM(input, llmProvider, history) {
   const start = Date.now()
   const messages = [
-    { role: 'system', content: 'You are a knowledgeable AI assistant. Answer clearly and concisely.' },
-    ...history.slice(-6),   // last 3 turns for context
-    { role: 'user', content: input }
+    { role:'system', content:'You are a knowledgeable AI assistant. Answer clearly and concisely.' },
+    ...history.slice(-6),
+    { role:'user', content:input }
   ]
 
-  if (provider === 'groq') {
+  if (llmProvider === 'groq') {
     try {
       const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method:'POST',
@@ -200,15 +300,15 @@ async function askLLM(input, provider, history) {
         body: JSON.stringify({ model:'llama-3.3-70b-versatile', messages, max_tokens:300, temperature:0.7 }),
         signal: AbortSignal.timeout(15000)
       })
-      if (!r.ok) { const e = await r.text(); return { reply: `[Groq error ${r.status}]`, ms:Date.now()-start } }
+      if (!r.ok) { const e = await r.text(); return { reply:`[Groq error ${r.status}]`, ms:Date.now()-start } }
       const j = await r.json()
       const reply = j.choices?.[0]?.message?.content || '[no response]'
       const tps   = j.usage ? Math.round(j.usage.completion_tokens / ((Date.now()-start)/1000)) : 0
-      return { reply, ms: Date.now()-start, source:`Groq · Llama-3.3-70B · ${tps} tok/s` }
+      return { reply, ms:Date.now()-start, source:`Groq · Llama-3.3-70B · ${tps} tok/s` }
     } catch(e) { return { reply:`[Groq offline: ${e.message}]`, ms:Date.now()-start } }
   }
 
-  if (provider === 'gpt4o') {
+  if (llmProvider === 'gpt4o') {
     try {
       const r = await fetch('https://api.openai.com/v1/chat/completions', {
         method:'POST',
@@ -218,21 +318,21 @@ async function askLLM(input, provider, history) {
       })
       if (!r.ok) { const e = await r.text(); return { reply:`[OpenAI error ${r.status}]`, ms:Date.now()-start } }
       const j = await r.json()
-      return { reply: j.choices?.[0]?.message?.content || '[no response]', ms:Date.now()-start, source:'OpenAI · GPT-4o' }
+      return { reply:j.choices?.[0]?.message?.content || '[no response]', ms:Date.now()-start, source:'OpenAI · GPT-4o' }
     } catch(e) { return { reply:`[GPT-4o offline: ${e.message}]`, ms:Date.now()-start } }
   }
 
-  if (provider === 'gemini') {
+  if (llmProvider === 'gemini') {
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ contents:[{ parts:[{ text: input }] }], generationConfig:{ maxOutputTokens:300, temperature:0.7 } }),
+        body: JSON.stringify({ contents:[{ parts:[{ text:input }] }], generationConfig:{ maxOutputTokens:300, temperature:0.7 } }),
         signal: AbortSignal.timeout(15000)
       })
       if (!r.ok) { const e = await r.text(); return { reply:`[Gemini error ${r.status}]`, ms:Date.now()-start } }
       const j = await r.json()
-      return { reply: j.candidates?.[0]?.content?.parts?.[0]?.text || '[no response]', ms:Date.now()-start, source:'Google · Gemini-2.0-Flash' }
+      return { reply:j.candidates?.[0]?.content?.parts?.[0]?.text || '[no response]', ms:Date.now()-start, source:'Google · Gemini-2.0-Flash' }
     } catch(e) { return { reply:`[Gemini offline: ${e.message}]`, ms:Date.now()-start } }
   }
 
@@ -240,63 +340,81 @@ async function askLLM(input, provider, history) {
   try {
     const r = await fetch('http://localhost:11434/api/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model: provider, messages, stream:false }),
+      body: JSON.stringify({ model:llmProvider, messages, stream:false }),
       signal: AbortSignal.timeout(30000)
     })
     const j = await r.json()
-    return { reply: j.message?.content || j.response || '[no response]', ms:Date.now()-start, source:`Ollama · ${provider}` }
-  } catch(e) { return { reply:`[Ollama offline]`, ms:Date.now()-start } }
+    return { reply:j.message?.content || j.response || '[no response]', ms:Date.now()-start, source:`Ollama · ${llmProvider}` }
+  } catch { return { reply:`[Ollama offline]`, ms:Date.now()-start } }
 }
 
 // ── Render a turn ─────────────────────────────────────────────────────────────
+// BOB: clean answer only. Routing stays invisible in WORM.
+// Verbose mode (--verbose): exposes the internal routing beneath the answer.
 
-function renderTurn(bob, llm, provider) {
-  const w = process.stdout.columns || 72
-  const divider = '─'.repeat(Math.min(w, 72))
-
-  // BOB block
-  process.stdout.write('\n')
-  process.stdout.write(`  \x1b[32m╔══ BOB \x1b[0m${divider.slice(7)}\n`)
-  process.stdout.write(`  \x1b[32m║\x1b[0m  ${bob.nil.word ? `Oracle: ${bob.nil.word}` : 'Oracle: NIL'}  ${bob.trigger.sequence}  \x1b[33m${bob.route.agent}\x1b[0m → ${bob.route.action}\n`)
-  process.stdout.write(`  \x1b[32m║\x1b[0m  Abjad: ${bob.route.abjad}  Ada: ${bob.gate.ok ? '\x1b[32mALLOWED\x1b[0m' : '\x1b[31mDENIED\x1b[0m'}  SSM: ${bob.newState.toFixed(4)}  Entropy: ${bob.src}\n`)
-  process.stdout.write(`  \x1b[32m║\x1b[0m  Tessera: ${bob.trigger.tessera}\n`)
-  process.stdout.write(`  \x1b[32m║\x1b[0m  WORM: \x1b[2m${bob.seal.slice(0,40)}…\x1b[0m\n`)
-  // Wrap answer text
-  const ansWords = bob.answer.split(' ')
-  let line = '  \x1b[32m║\x1b[0m  '
-  ansWords.forEach(w2 => {
-    if ((line + w2).length > 74) { process.stdout.write(line + '\n'); line = '  \x1b[32m║\x1b[0m  ' }
-    line += w2 + ' '
-  })
-  if (line.trim().length > 5) process.stdout.write(line + '\n')
-  process.stdout.write(`  \x1b[32m╚\x1b[0m${divider.slice(1)}\n`)
-
-  // LLM block
-  const llmLabel = llm.source || provider.toUpperCase()
-  process.stdout.write(`\n  \x1b[36m╔══ ${llmLabel} \x1b[0m\n`)
-  if (llm.reply) {
-    const replyWords = llm.reply.trim().split(' ')
-    let rline = '  \x1b[36m║\x1b[0m  '
-    replyWords.forEach(w3 => {
-      if ((rline + w3).length > 74) { process.stdout.write(rline + '\n'); rline = '  \x1b[36m║\x1b[0m  ' }
-      rline += w3 + ' '
-    })
-    if (rline.trim().length > 5) process.stdout.write(rline + '\n')
+function wrapText(text, prefix, maxWidth) {
+  const lines = text.split('\n')
+  const out = []
+  for (const rawLine of lines) {
+    if (rawLine === '') { out.push(prefix); continue }
+    const words = rawLine.split(' ')
+    let line = prefix
+    for (const w of words) {
+      if ((line + w).replace(/\x1b\[[0-9;]*m/g, '').length > maxWidth) {
+        out.push(line)
+        line = prefix
+      }
+      line += w + ' '
+    }
+    if (line.trim().replace(/\x1b\[[0-9;]*m/g, '').length > prefix.trim().length) out.push(line)
   }
-  process.stdout.write(`  \x1b[36m║\x1b[0m  \x1b[2m(${llm.ms}ms)\x1b[0m\n`)
-  process.stdout.write(`  \x1b[36m╚\x1b[0m${divider.slice(1)}\n\n`)
+  return out.join('\n')
+}
+
+function renderTurn(bob, llm, llmProvider) {
+  const w = Math.min(process.stdout.columns || 72, 76)
+  const hr = '─'.repeat(w - 2)
+  const G  = '\x1b[32m'  // green
+  const C  = '\x1b[36m'  // cyan
+  const DIM= '\x1b[2m'
+  const R  = '\x1b[0m'
+  const Y  = '\x1b[33m'
+
+  // ── BOB answer block ──
+  process.stdout.write(`\n  ${G}╔══ BOB${R}${hr.slice(6)}\n`)
+
+  const answerText = wrapText(bob.answer, `  ${G}║${R}  `, w)
+  process.stdout.write(answerText + '\n')
+
+  // Verbose: show routing beneath a separator
+  if (VERBOSE) {
+    process.stdout.write(`  ${G}║${R}  ${DIM}${hr.slice(4)}${R}\n`)
+    process.stdout.write(`  ${G}║${R}  ${DIM}Oracle: ${bob.nil.word || 'NIL'}  ${bob.trigger.sequence}  ${bob.route.agent} → ${bob.route.action}${R}\n`)
+    process.stdout.write(`  ${G}║${R}  ${DIM}Abjad: ${bob.route.abjad}  Ada: ${bob.gate.ok ? 'ALLOWED' : 'DENIED'}  SSM: ${bob.newState.toFixed(4)}  Src: ${bob.src}${R}\n`)
+    process.stdout.write(`  ${G}║${R}  ${DIM}WORM: ${bob.seal.slice(0,40)}…${R}\n`)
+  }
+
+  process.stdout.write(`  ${G}╚${R}${hr.slice(1)}\n`)
+
+  // ── LLM answer block ──
+  const llmLabel = llm.source || llmProvider.toUpperCase()
+  process.stdout.write(`\n  ${C}╔══ ${llmLabel}${R}\n`)
+  if (llm.reply) {
+    const replyText = wrapText(llm.reply.trim(), `  ${C}║${R}  `, w)
+    process.stdout.write(replyText + '\n')
+  }
+  process.stdout.write(`  ${C}║${R}  ${DIM}(${llm.ms}ms)${R}\n`)
+  process.stdout.write(`  ${C}╚${R}${hr.slice(1)}\n\n`)
 }
 
 // ── Main REPL ─────────────────────────────────────────────────────────────────
 
-const provider  = process.argv[2] || 'groq'
-const llmLabel  = { groq:'Groq Llama-3.3-70B', gpt4o:'GPT-4o', gemini:'Gemini-2.0-Flash' }[provider] || provider
+const llmLabel = { groq:'Groq Llama-3.3-70B', gpt4o:'GPT-4o', gemini:'Gemini-2.0-Flash' }[provider] || provider
 
 let ssmState    = 0.0
 const llmHistory = []
-let turnCount   = 0
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true })
+const rl = readline.createInterface({ input:process.stdin, output:process.stdout, terminal:true })
 
 process.stdout.write('\n')
 process.stdout.write('  \x1b[32m██████╗  ██████╗ ██████╗\x1b[0m\n')
@@ -305,8 +423,9 @@ process.stdout.write('  \x1b[32m██████╔╝██║   ██║█
 process.stdout.write('  \x1b[32m██╔══██╗██║   ██║██╔══██╗\x1b[0m\n')
 process.stdout.write('  \x1b[32m██████╔╝╚██████╔╝██████╔╝\x1b[0m\n')
 process.stdout.write('  \x1b[32m╚═════╝  ╚═════╝ ╚═════╝\x1b[0m\n')
-process.stdout.write(`\n  Sovereign Logic Machine vs \x1b[36m${llmLabel}\x1b[0m\n`)
-process.stdout.write('  HolyC NIL · EmojiCode QRNG · Prolog · Ada · WORM\n')
+process.stdout.write(`\n  Sovereign Logic Machine  ↔  \x1b[36m${llmLabel}\x1b[0m\n`)
+process.stdout.write('  All reasoning sealed in WORM — hidden by design\x1b[0m\n')
+if (VERBOSE) process.stdout.write('  \x1b[33m[VERBOSE] Internal routing visible\x1b[0m\n')
 process.stdout.write('  \x1b[2m/worm  /agent  /quit\x1b[0m\n\n')
 
 rl.on('close', () => {
@@ -328,8 +447,12 @@ function prompt() {
     if (input === '/worm') {
       const chain = worm.load()
       process.stdout.write(`\n  WORM chain — ${chain.length} events\n`)
-      chain.slice(-5).forEach((e, i) => {
-        process.stdout.write(`  ${chain.length - 5 + i + 1}. ${e.label}  \x1b[2m${e.seal.slice(0,24)}…\x1b[0m  ${e.ts.slice(0,19)}\n`)
+      chain.slice(-6).forEach((e, i) => {
+        const n = chain.length - Math.min(6, chain.length) + i + 1
+        process.stdout.write(`  ${n}. ${e.label}  \x1b[2m${e.seal.slice(0,24)}…\x1b[0m  ${e.ts.slice(0,19)}\n`)
+        if (e.payload?.route) {
+          process.stdout.write(`     \x1b[2m${e.payload.route} → ${e.payload.action}  oracle:${e.payload.oracle}  abjad:${e.payload.abjad}\x1b[0m\n`)
+        }
       })
       process.stdout.write('\n')
       prompt(); return
@@ -337,12 +460,11 @@ function prompt() {
 
     if (input === '/agent') {
       const { runAgent } = await import('./autonomous_agent.mjs')
-      await runAgent(3, { verbose: true, delayMs: 200 })
+      await runAgent(3, { verbose:true, delayMs:200 })
       prompt(); return
     }
 
-    turnCount++
-    process.stdout.write(`  \x1b[2mProcessing…\x1b[0m\r`)
+    process.stdout.write('  \x1b[2mProcessing…\x1b[0m\r')
 
     const [bob, llm] = await Promise.all([
       askBOB(input, ssmState),
@@ -350,10 +472,8 @@ function prompt() {
     ])
 
     ssmState = bob.newState
-
-    // Update LLM history for context
-    llmHistory.push({ role:'user', content: input })
-    if (llm.reply) llmHistory.push({ role:'assistant', content: llm.reply })
+    llmHistory.push({ role:'user', content:input })
+    if (llm.reply) llmHistory.push({ role:'assistant', content:llm.reply })
 
     renderTurn(bob, llm, provider)
     prompt()

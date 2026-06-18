@@ -16,7 +16,8 @@
     "emoji":      "node autonomous/emoji_trigger.mjs",
     "agent":      "node autonomous/autonomous_agent.mjs",
     "compare":    "node autonomous/compare.mjs",
-    "chat":       "node autonomous/chat.mjs"
+    "chat":       "node autonomous/chat.mjs",
+    "dict":       "node autonomous/dictionary.mjs"
   },
   "dependencies": {
     "@snapkitty/mcp-server": "file:../snapkitty-mcp"

@@ -505,12 +505,15 @@ function prompt() {
 
     // /3d [shape] [--anim] [--shade full]  — case-insensitive
     if (cmd.startsWith('/3d')) {
-      const parts  = input.split(/\s+/)
-      const shape  = (parts[1] || 'bob').toLowerCase()
-      const anim   = parts.includes('--anim')
-      const shade  = parts[parts.indexOf('--shade')+1] || 'simple'
-      const width  = parseInt(parts[parts.indexOf('--width')+1]) || Math.min(process.stdout.columns||80, 90)
-      const height = parseInt(parts[parts.indexOf('--height')+1]) || 36
+      const parts   = input.split(/\s+/)
+      const shape   = (parts[1] || 'bob').toLowerCase()
+      const anim    = parts.includes('--anim') || parts.includes('--ANIM')
+      const si      = parts.findIndex(p => p.toLowerCase() === '--shade')
+      const wi      = parts.findIndex(p => p.toLowerCase() === '--width')
+      const hi      = parts.findIndex(p => p.toLowerCase() === '--height')
+      const shade   = si >= 0 ? parts[si + 1] : 'simple'
+      const width   = wi >= 0 ? parseInt(parts[wi + 1]) : Math.min(process.stdout.columns || 80, 90)
+      const height  = hi >= 0 ? parseInt(parts[hi + 1]) : 36
       process.stdout.write(`\n  Rendering 3D ${shape}…\n`)
       await ascii3d(shape, { width, height, anim, shade })
       prompt(); return

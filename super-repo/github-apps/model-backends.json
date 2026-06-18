@@ -1,0 +1,26 @@
+{
+  "apps": [
+    {
+      "model": "nemotron",
+      "githubApp": "snapkitty-nemotron-eda",
+      "backend": "ephemeral-eda-worker/nemotron",
+      "permissions": ["pull_requests:read", "checks:write", "contents:read"],
+      "routes": ["rtl", "formal", "synthesis"]
+    },
+    {
+      "model": "mistral",
+      "githubApp": "snapkitty-mistral-review",
+      "backend": "ephemeral-eda-worker/review",
+      "permissions": ["pull_requests:read", "checks:write"],
+      "routes": ["lint", "driver-map", "docs"]
+    },
+    {
+      "model": "dboib",
+      "githubApp": "snapkitty-dboib-meta-agent",
+      "backend": "router/control-plane",
+      "permissions": ["metadata:read", "checks:write"],
+      "routes": ["dependency-graph", "minimal-verification", "worm-receipt"]
+    }
+  ]
+}
+

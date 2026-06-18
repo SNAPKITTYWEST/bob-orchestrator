@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inverted Mono Super Repo</title>
+    <link rel="stylesheet" href="super.css">
+  </head>
+  <body>
+    <main class="shell">
+      <nav class="topline">
+        <a href="../">ROM</a>
+        <a href="../apple-gitdos/">Apple GitDOS</a>
+        <a href="../tessera/studio.html">Tessera</a>
+      </nav>
+      <section class="hero">
+        <p class="eyebrow">SnapKitty OS / A.P.E. Computer Production Pattern</p>
+        <h1>Inverted Mono Super Repo</h1>
+        <p>Binary op bytecode, RTL-as-code, GitHub App backends, model agents, and GitHub Pages control surface in one production repo.</p>
+      </section>
+
+      <section class="grid status-grid">
+        <article class="card">
+          <p class="eyebrow">Build Philosophy</p>
+          <h2>Dependency Inversion</h2>
+          <p>High-level semiconductor policy depends on abstract interfaces, not simulator or synthesis vendor details.</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Repo Strategy</p>
+          <h2>Atomic Super Repo</h2>
+          <p>RTL, verification, drivers, model contracts, GitHub Apps, bytecode, and Pages UI move in one commit.</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Meta Agent</p>
+          <h2>DBOIB</h2>
+          <p>Dependency-Bound Orchestrator-In-Box routes PR context to model app backends and EDA workers.</p>
+        </article>
+      </section>
+
+      <section class="workbench">
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Binary Opcode / Bytecode</h2>
+            <button id="compile">Compile Selected Flow</button>
+          </div>
+          <select id="flow">
+            <option value="rtl">RTL change → sim → formal → WORM</option>
+            <option value="driver">Register map → driver → firmware check</option>
+            <option value="model">Model twin → GitHub App backend → EDA context</option>
+          </select>
+          <pre id="bytecode"></pre>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h2>GitHub App Backends Per Model</h2>
+            <button id="route">Route PR Event</button>
+          </div>
+          <pre id="apps"></pre>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Inverted Control Graph</h2>
+        <div id="graph"></div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Zero-Trust Boundaries</h2>
+          <p>GitHub App identity, PR-scoped permissions, model-specific workers, WORM receipts, and artifact hashes gate every EDA action.</p>
+        </article>
+        <article class="card">
+          <h2>Scale + Binaries</h2>
+          <p>Git LFS keeps waveforms, bitstreams, netlists, and generated EDA artifacts out of the hot source tree.</p>
+        </article>
+        <article class="card">
+          <h2>Minimal Verification</h2>
+          <p>The bytecode compiler selects only affected simulation, synthesis, formal, firmware, and model checks.</p>
+        </article>
+      </section>
+    </main>
+    <script src="super.js"></script>
+  </body>
+</html>
+

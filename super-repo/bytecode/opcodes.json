@@ -1,0 +1,14 @@
+{
+  "OP_PR_CONTEXT": "0x01",
+  "OP_RTL_DELTA": "0x10",
+  "OP_REGMAP_DELTA": "0x11",
+  "OP_MODEL_CONTEXT": "0x12",
+  "OP_ROUTE_APP": "0x20",
+  "OP_EDA_SIM": "0x30",
+  "OP_FORMAL": "0x31",
+  "OP_SYNTH": "0x32",
+  "OP_DRIVER_CHECK": "0x33",
+  "OP_WORM_RECEIPT": "0xF0",
+  "OP_PAGES_REPORT": "0xF1"
+}
+

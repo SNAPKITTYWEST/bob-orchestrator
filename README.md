@@ -85,6 +85,10 @@ The Esolang Crypto-Art Forge adds Brainfuck, Malbolge-inspired, Shakespeare, Che
 
 `apple-gitdos/` is a retro DOS-inspired AI terminal for the SnapKitty OS / A.P.E. computer demo. The terminal is the chat UI: type `HELP`, `CATALOG`, `ASK <prompt>`, `MODEL <tag>`, `STATUS`, `RUN TESSERA`, `SEAL <text>`, `PR#WORM`, or `SAVE`. It runs entirely on GitHub Pages, calls local Ollama over loopback when available, and seals chat/tool transcripts into a browser-local WORM chain.
 
+## Inverted Mono Super Repo
+
+`super-repo/` is the production pattern for a GitHub-native hardware/model monorepo: binary op bytecode, abstract RTL interfaces, GitHub App backend contracts per model, DBOIB meta-agent routing, Git LFS artifact boundaries, and a Pages control graph. It demonstrates how RTL, verification, firmware, model context, and EDA integration become one dependency-inverted repo.
+
 ## MCP integration
 
 Install the companion MCP server to call BOB from Claude:

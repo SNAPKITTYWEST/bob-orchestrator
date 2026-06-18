@@ -73,6 +73,8 @@ async function run(raw) {
   if (command === 'SEAL') return seal(args || state.transcript.map((item) => item.text).join('\n'))
   if (command === 'RUN' && args.toUpperCase() === 'TESSERA') return open('../tessera/studio.html', '_self')
   if (command === 'OPEN' && args.toUpperCase() === 'TESSERA') return open('../tessera/studio.html', '_self')
+  if (command === 'RUN' && args.toUpperCase() === 'SUPERREPO') return open('../super-repo/', '_self')
+  if (command === 'OPEN' && args.toUpperCase() === 'SUPERREPO') return open('../super-repo/', '_self')
   if (command === 'SAVE') return saveTranscript()
   if (command === 'GIT') return git(args)
   if (command === 'ASK' || command === 'CHAT' || command === 'BRUN') return ask(args)
@@ -90,6 +92,7 @@ function help() {
   print('  ENDPOINT <URL>       SET OLLAMA ENDPOINT')
   print('  STATUS               CHECK LOCAL OLLAMA')
   print('  RUN TESSERA          OPEN TESSERA STUDIO')
+  print('  RUN SUPERREPO        OPEN INVERTED MONO SUPER REPO')
   print('  SEAL <TEXT>          WORM-SEAL TEXT')
   print('  PR#WORM              SHOW WORM CHAIN')
   print('  GIT STATUS           SHOW DEMO REPO STATE')
@@ -103,6 +106,7 @@ function catalog() {
     'A 002 GITDOS.SYSTEM',
     'B 004 OLLAMA.BRUN',
     'B 003 TESSERA.STUDIO',
+    'B 006 SUPERREPO.BIN',
     'T 002 WORM.SEAL',
     'T 001 ADA.CONTRACT',
     'T 001 LEAN4.PROOF',
@@ -246,4 +250,3 @@ async function sha256(value) {
   const digest = await crypto.subtle.digest('SHA-256', bytes)
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
-

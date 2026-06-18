@@ -17,7 +17,10 @@
     "agent":      "node autonomous/autonomous_agent.mjs",
     "compare":    "node autonomous/compare.mjs",
     "chat":       "node autonomous/chat.mjs",
-    "dict":       "node autonomous/dictionary.mjs"
+    "dict":       "node autonomous/dictionary.mjs",
+    "img2ascii":  "python ascii/img2ascii.py",
+    "ascii3d":    "python ascii/ascii3d.py",
+    "ascii":      "node ascii/bob_ascii.mjs"
   },
   "dependencies": {
     "@snapkitty/mcp-server": "file:../snapkitty-mcp"

@@ -24,6 +24,7 @@ import readline          from 'readline'
 import { holyc_nil }     from './holyc_nil.mjs'
 import { emoji_trigger } from './emoji_trigger.mjs'
 import { sovereignAnswer, extractConcepts } from './dictionary.mjs'
+import { img2ascii, ascii3d, pythonAvailable } from '../ascii/bob_ascii.mjs'
 import { createHash }    from 'crypto'
 import { readFileSync, existsSync, writeFileSync } from 'fs'
 import { join }          from 'path'
@@ -426,7 +427,7 @@ process.stdout.write('  \x1b[32m╚═════╝  ╚═════╝ ╚
 process.stdout.write(`\n  Sovereign Logic Machine  ↔  \x1b[36m${llmLabel}\x1b[0m\n`)
 process.stdout.write('  All reasoning sealed in WORM — hidden by design\x1b[0m\n')
 if (VERBOSE) process.stdout.write('  \x1b[33m[VERBOSE] Internal routing visible\x1b[0m\n')
-process.stdout.write('  \x1b[2m/worm  /agent  /quit\x1b[0m\n\n')
+process.stdout.write('  \x1b[2m/worm  /agent  /3d [shape]  /img [path]  /quit\x1b[0m\n\n')
 
 rl.on('close', () => {
   process.stdout.write('\n  WORM chain sealed. BOB holds.\n\n')
@@ -461,6 +462,37 @@ function prompt() {
     if (input === '/agent') {
       const { runAgent } = await import('./autonomous_agent.mjs')
       await runAgent(3, { verbose:true, delayMs:200 })
+      prompt(); return
+    }
+
+    // /3d [shape] [--anim] [--shade full]
+    if (input.startsWith('/3d')) {
+      const parts  = input.split(/\s+/)
+      const shape  = parts[1] || 'bob'
+      const anim   = parts.includes('--anim')
+      const shade  = parts[parts.indexOf('--shade')+1] || 'simple'
+      const width  = parseInt(parts[parts.indexOf('--width')+1]) || Math.min(process.stdout.columns||80, 90)
+      const height = parseInt(parts[parts.indexOf('--height')+1]) || 36
+      process.stdout.write(`\n  Rendering 3D ${shape}…\n`)
+      await ascii3d(shape, { width, height, anim, shade })
+      prompt(); return
+    }
+
+    // /img [path] [--color] [--invert] [--mode ascii|block|dense]
+    if (input.startsWith('/img')) {
+      const parts  = input.split(/\s+/)
+      const path   = parts[1]
+      if (!path) {
+        process.stdout.write('\n  Usage: /img path/to/image.jpg [--color] [--invert] [--mode ascii|block|dense]\n\n')
+        prompt(); return
+      }
+      const color  = parts.includes('--color')
+      const invert = parts.includes('--invert')
+      const modeI  = parts.indexOf('--mode')
+      const mode   = modeI >= 0 ? parts[modeI+1] : 'ascii'
+      const width  = Math.min(process.stdout.columns||80, 120)
+      process.stdout.write(`\n  Converting image: ${path}\n`)
+      await img2ascii(path, { width, color, invert, mode })
       prompt(); return
     }
 

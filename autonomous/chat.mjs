@@ -385,7 +385,10 @@ function renderBOBOnly(bob) {
 // BOB: clean answer only. Routing stays invisible in WORM.
 // Verbose mode (--verbose): exposes the internal routing beneath the answer.
 
+const stripAnsi = s => s.replace(/\x1b\[[0-9;]*m/g, '')
+
 function wrapText(text, prefix, maxWidth) {
+  const prefixLen = stripAnsi(prefix).length   // actual visible width of the prefix
   const lines = text.split('\n')
   const out = []
   for (const rawLine of lines) {
@@ -393,13 +396,14 @@ function wrapText(text, prefix, maxWidth) {
     const words = rawLine.split(' ')
     let line = prefix
     for (const w of words) {
-      if ((line + w).replace(/\x1b\[[0-9;]*m/g, '').length > maxWidth) {
+      if (stripAnsi(line + w).length > maxWidth) {
         out.push(line)
         line = prefix
       }
       line += w + ' '
     }
-    if (line.trim().replace(/\x1b\[[0-9;]*m/g, '').length > prefix.trim().length) out.push(line)
+    // push remaining content only if it has visible chars beyond the prefix
+    if (stripAnsi(line).length > prefixLen) out.push(line)
   }
   return out.join('\n')
 }

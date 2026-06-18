@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tessera Studio</title>
+    <link rel="stylesheet" href="studio.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">BOB Spatial Language</p>
+        <h1>Tessera Studio</h1>
+        <p>The art is the program. The layout is the logic. The hash is the seal.</p>
+      </section>
+
+      <section class="workbench">
+        <div class="editor-panel">
+          <div class="panel-head">
+            <h2>ASCII Source</h2>
+            <div class="actions">
+              <button data-load="bob">BOB</button>
+              <button data-load="full">Full Pipeline</button>
+              <button data-load="call49">49th Call</button>
+              <button id="corrupt">Corrupt One Char</button>
+            </div>
+          </div>
+          <textarea id="source" spellcheck="false"></textarea>
+        </div>
+
+        <div class="seal-panel">
+          <h2>Spatial Seal</h2>
+          <dl>
+            <div><dt>SHA-256</dt><dd id="hash">...</dd></div>
+            <div><dt>Envelope</dt><dd id="envelope">...</dd></div>
+            <div><dt>Dimensions</dt><dd id="dims">...</dd></div>
+            <div><dt>Corruption</dt><dd id="corruption">clean</dd></div>
+          </dl>
+          <div class="actions vertical">
+            <button id="download-source">Download .tes</button>
+            <button id="download-svg">Download SVG</button>
+            <button id="download-manifest">Download Manifest</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="studio-grid">
+        <article class="panel">
+          <h2>Rendered Tessera</h2>
+          <div id="art"></div>
+        </article>
+        <article class="panel">
+          <h2>Compiled BOB Opcodes</h2>
+          <pre id="compiled"></pre>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Parser Trace</h2>
+        <pre id="trace"></pre>
+      </section>
+    </main>
+    <script src="studio.js"></script>
+  </body>
+</html>
+

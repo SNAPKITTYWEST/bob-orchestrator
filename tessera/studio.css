@@ -1,0 +1,176 @@
+:root {
+  color-scheme: dark;
+  --bg: #08090d;
+  --panel: #11131b;
+  --panel2: #171a24;
+  --ink: #f4f7fb;
+  --muted: #aab4c4;
+  --green: #00ff88;
+  --orange: #f97316;
+  --purple: #7c3aed;
+  --line: #2a2e3c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+.shell {
+  width: min(1380px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 36px 0 56px;
+}
+
+.hero {
+  min-height: 24vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--orange);
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+h1, h2 { margin: 0; letter-spacing: 0; }
+h1 { color: var(--green); font-size: clamp(2.5rem, 6vw, 5rem); }
+h2 { font-size: 1rem; color: var(--green); }
+p { color: var(--muted); max-width: 840px; }
+
+.workbench,
+.studio-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+  gap: 16px;
+  margin: 22px 0;
+}
+
+.panel,
+.editor-panel,
+.seal-panel {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vertical {
+  flex-direction: column;
+}
+
+button {
+  border: 1px solid var(--green);
+  background: rgba(0, 255, 136, 0.08);
+  color: var(--green);
+  border-radius: 6px;
+  min-height: 36px;
+  padding: 8px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+textarea {
+  width: 100%;
+  min-height: 420px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #05060a;
+  color: var(--ink);
+  padding: 14px;
+  font: 15px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre;
+  overflow: auto;
+}
+
+dl { margin: 0; display: grid; gap: 14px; }
+dt { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; }
+dd { margin: 4px 0 0; overflow-wrap: anywhere; color: var(--ink); }
+
+#art {
+  overflow: auto;
+  min-height: 420px;
+  background: #05060a;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+svg { display: block; min-width: 720px; }
+
+pre {
+  white-space: pre-wrap;
+  overflow: auto;
+  min-height: 320px;
+  max-height: 560px;
+  margin: 14px 0 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #05060a;
+  color: var(--ink);
+}
+
+.node rect {
+  fill: rgba(0, 255, 136, 0.08);
+  stroke: var(--green);
+  stroke-width: 2;
+  rx: 8;
+}
+
+.node.verify rect { stroke: var(--purple); fill: rgba(124, 58, 237, 0.13); }
+.node.contract rect { stroke: var(--orange); fill: rgba(249, 115, 22, 0.12); }
+.node.bridge rect { stroke: #8bd4ff; fill: rgba(139, 212, 255, 0.12); }
+
+.node text {
+  fill: var(--ink);
+  font: 13px ui-monospace, monospace;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.edge {
+  stroke: var(--green);
+  stroke-width: 2.5;
+  fill: none;
+  marker-end: url(#arrow);
+}
+
+.edge.BACKWARD { stroke: var(--orange); marker-end: url(#arrow-orange); }
+.edge.QUANTUM { stroke: var(--purple); stroke-dasharray: 3 7; marker-end: url(#arrow-purple); }
+.edge.GATE, .edge.V-GATE { stroke-width: 4; }
+
+@media (max-width: 900px) {
+  .workbench,
+  .studio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

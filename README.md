@@ -64,7 +64,17 @@ node core/bob.mjs --test
 
 # Live demo with Ollama
 node bridge/demo.mjs
+
+# Tessera spatial language demo
+node tessera/tessera_demo.mjs
+
+# Tessera Studio art + crypto workbench
+npm run studio
 ```
+
+## Tessera Studio
+
+Open `tessera/studio.html` through a local static server to edit spatial programs as art. The studio parses ASCII layout into nodes and edges, renders SVG, compiles BOB opcodes, computes the spatial SHA-256 seal, runs the one-character corruption demo, and exports `.tes`, `.svg`, and manifest JSON artifacts.
 
 ## MCP integration
 

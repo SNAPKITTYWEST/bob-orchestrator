@@ -219,9 +219,15 @@ pre {
   rx: 8;
 }
 
-.node.verify rect { stroke: var(--purple); fill: rgba(124, 58, 237, 0.13); }
+.node.verify rect   { stroke: var(--purple); fill: rgba(124, 58, 237, 0.13); }
 .node.contract rect { stroke: var(--orange); fill: rgba(249, 115, 22, 0.12); }
-.node.bridge rect { stroke: #8bd4ff; fill: rgba(139, 212, 255, 0.12); }
+.node.bridge rect   { stroke: #8bd4ff; fill: rgba(139, 212, 255, 0.12); }
+/* PLANNER — Hewitt pattern-directed node. Fires on pattern match, not explicit call. */
+.node.planner rect  { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.10); stroke-dasharray: 6 3; }
+/* NIL — inverted Abjad 910 — maximum reflection */
+.node.op-op-nil rect   { stroke: #f97316; fill: rgba(249, 115, 22, 0.18); stroke-width: 3; }
+/* QUBIT — superposition — purple ring */
+.node.op-op-qubit rect { stroke: var(--purple); fill: rgba(124, 58, 237, 0.22); stroke-width: 3; stroke-dasharray: 4 2; }
 
 .node text {
   fill: var(--ink);
@@ -240,6 +246,48 @@ pre {
 .edge.BACKWARD { stroke: var(--orange); marker-end: url(#arrow-orange); }
 .edge.QUANTUM { stroke: var(--purple); stroke-dasharray: 3 7; marker-end: url(#arrow-purple); }
 .edge.GATE, .edge.V-GATE { stroke-width: 4; }
+
+#spectrum-panel {
+  padding: 14px 0 4px;
+  display: grid;
+  gap: 6px;
+}
+
+.sp-axis {
+  display: flex;
+  gap: 20px;
+  font-size: 0.72rem;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sp-row {
+  display: grid;
+  grid-template-columns: 180px 1fr 52px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+
+.sp-label { font-size: 0.72rem; white-space: nowrap; }
+
+.sp-bar-wrap {
+  height: 8px;
+  background: #111318;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sp-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.25s ease;
+  opacity: 0.85;
+}
+
+.sp-val { color: var(--muted); text-align: right; font-size: 0.72rem; }
+.sp-name { color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (max-width: 900px) {
   .workbench,

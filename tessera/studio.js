@@ -1,4 +1,22 @@
 const examples = {
+  planner: `
+{ WHEN: pattern=SOVEREIGN_TASK } ----(->)---- [ PROLOG-ROUTE ]
+                 |                                    |
+                (==)                                 (==)
+                 |                                    |
+{ GOAL: achieve=WORM_SEAL } -----> [ ORACLE-CALL ] ····> [ QUBIT ]
+                                                               |
+                                                              (==)
+                                                               |
+                                                     [ CORE-LOGIC ] ----(->)---- | ADA |
+`.trim(),
+  nilqubit: `
+[ NIL ] ----(->)---- [ QUBIT ] ····> [ ORACLE-CALL ]
+  |                     |                   |
+ (==)                  (==)                (==)
+  |                     |                   |
+[ INPUT ] -----> [ PROLOG-ROUTE ] -----> [ CORE-LOGIC ] ----(->)---- [ WORM-SEAL ]
+`.trim(),
   bob: `
 [ PUSH-DATA ] ----(->)---- [ V-AUDIT-LEAN4 ]
      |                           |
@@ -46,7 +64,45 @@ const opcodes = {
   'HOLYC-RUN': 'OP_HOLYC',
   'LTR-PROCLAMATION': 'OP_OUTPUT',
   'RTL-RESPONSE': 'OP_OUTPUT',
-  'BACKWARD-PATH': 'OP_SOVEREIGN'
+  'BACKWARD-PATH': 'OP_SOVEREIGN',
+  // NIL — inverted Abjad ن+ي+ل = 90, complement = 910
+  // The ground state. Maximum inverted weight. The omega that loops to alpha.
+  'NIL': 'OP_NIL',
+  'NILL': 'OP_NIL',
+  // QUBIT — pre-collapse superposition. All paths open, equal weight.
+  'QUBIT': 'OP_QUBIT',
+  'SUPERPOSE': 'OP_QUBIT',
+  // PLANNER nodes — pattern-directed invocation (Hewitt 1969)
+  // Fires automatically when the named pattern arrives. No explicit call needed.
+  'WHEN': 'OP_PLANNER_ANTE',   // antecedent theorem: IF pattern THEN fire
+  'GOAL': 'OP_PLANNER_CONS',   // consequent theorem: TO achieve goal, TRY this
+  'ASSERT': 'OP_PLANNER_ASSERT',
+  'RETRACT': 'OP_PLANNER_RETRACT',
+}
+
+// Abjad weights — Arabic letter-number system (ا=1 … غ=1000)
+// Used to assign semantic weight to each opcode on the NIL→QUBIT spectrum.
+// NIL (ن=50 ي=10 ل=30) = 90 forward, 910 inverted (complement of 1000)
+// QUBIT (ق=100 و=6 ب=2 ي=10 ت=400) = 518
+// Classical ops cluster between 90–518. Prolog = 518+. Ada = gated.
+const ABJAD_WEIGHT = {
+  'OP_NIL':             910,   // inverted Abjad — maximum reflection
+  'OP_QUBIT':           518,   // pure superposition — all paths equal
+  'OP_QUANTUM':         490,   // near-qubit — quantum entropy source
+  'OP_PLANNER_ANTE':    420,   // pattern fires automatically
+  'OP_PLANNER_CONS':    380,   // goal-directed theorem
+  'OP_PLANNER_ASSERT':  340,
+  'OP_PLANNER_RETRACT': 300,
+  'OP_PROLOG':          280,   // Horn clause resolution — determined logic
+  'OP_SSM':             240,   // Mamba state space — learned memory
+  'OP_SOVEREIGN':       200,   // BOB orchestrator step
+  'OP_LEAN4':           160,   // formal proof obligation
+  'OP_ADA':             120,   // contract gate — binary ALLOWED/DENIED
+  'OP_HOLYC':            95,   // HolyC simulation — Terry's realm
+  'OP_WORM':             92,   // sealed — append-only, collapsed
+  'OP_INPUT':            91,   // data entry point
+  'OP_OUTPUT':           90,   // collapsed output — NIL-adjacent
+  'OP_UNKNOWN':           0,   // unresolved — true vacuum
 }
 
 const source = document.getElementById('source')
@@ -118,7 +174,8 @@ function parse(src) {
     { open: '[', close: ']', type: 'CELL' },
     { open: '<', close: '>', type: 'VERIFY' },
     { open: '|', close: '|', type: 'CONTRACT' },
-    { open: '(', close: ')', type: 'BRIDGE' }
+    { open: '(', close: ')', type: 'BRIDGE' },
+    { open: '{', close: '}', type: 'PLANNER' },  // Hewitt pattern-directed node
   ]
   lines.forEach((line, row) => {
     for (const pattern of patterns) {
@@ -196,19 +253,29 @@ function compile(ast, spatialHash) {
     const key = node.label.toUpperCase().replace(/\s+/g, '-')
     const incoming = ast.edges.filter((edge) => edge.to === node.id)
     const outgoing = ast.edges.filter((edge) => edge.from === node.id)
+    const op = opcodes[key] || 'OP_UNKNOWN'
+    const abjad = ABJAD_WEIGHT[op] ?? 0
+    // Spectrum position: 0 = NIL (910), 1 = QUBIT (518), approaching 0 = collapsed
+    // Normalized: 0.0 = OP_UNKNOWN (vacuum), 1.0 = OP_NIL (inverted maximum)
+    const spectrumPos = abjad / 910
     return {
       index,
-      op: opcodes[key] || 'OP_UNKNOWN',
+      op,
+      abjad,
+      spectrumPos,
       label: node.label,
       type: node.type,
       row: node.row,
       col: node.col,
       flags: {
-        quantum_seeded: incoming.some((edge) => edge.type === 'QUANTUM'),
-        rtl_reversed: incoming.some((edge) => edge.type === 'BACKWARD'),
-        ada_gated_out: outgoing.some((edge) => edge.type === 'GATE' || edge.type === 'V-GATE'),
-        lean4_required: node.type === 'VERIFY',
-        contract_bound: node.type === 'CONTRACT'
+        quantum_seeded:    incoming.some((edge) => edge.type === 'QUANTUM'),
+        rtl_reversed:      incoming.some((edge) => edge.type === 'BACKWARD'),
+        ada_gated_out:     outgoing.some((edge) => edge.type === 'GATE' || edge.type === 'V-GATE'),
+        lean4_required:    node.type === 'VERIFY',
+        contract_bound:    node.type === 'CONTRACT',
+        planner_reactive:  node.type === 'PLANNER',
+        nil_ground:        op === 'OP_NIL',
+        qubit_superposed:  op === 'OP_QUBIT',
       },
       source_hash: spatialHash
     }
@@ -230,8 +297,10 @@ async function render() {
   artNode.innerHTML = renderSvg(ast, spatialHash)
   compiledNode.textContent = instructions.map((item) => {
     const flags = Object.entries(item.flags).filter(([, value]) => value).map(([key]) => key).join(', ')
-    return `${String(item.index).padStart(2, '0')} ${item.op.padEnd(14)} "${item.label}"${flags ? `  [${flags}]` : ''}`
+    const bar = spectrumBar(item.spectrumPos)
+    return `${String(item.index).padStart(2, '0')} ${item.op.padEnd(22)} ${bar} abjad:${String(item.abjad).padStart(4)}  "${item.label}"${flags ? `\n   [${flags}]` : ''}`
   }).join('\n')
+  renderSpectrum(instructions)
   traceNode.textContent = [
     `TESSERA PARSE — spatial hash: ${spatialHash.slice(0, 16)}…`,
     `dims: ${ast.dims.rows}r × ${ast.dims.cols}c`,
@@ -271,9 +340,47 @@ function renderSvg(ast, spatialHash) {
   const nodes = ast.nodes.map((node) => {
     const p = center(node)
     const w = Math.max(92, (node.endCol - node.col + 3) * cellW)
-    return `<g class="node ${node.type.toLowerCase()}"><rect x="${p.x - w / 2}" y="${p.y - 18}" width="${w}" height="36"/><text x="${p.x}" y="${p.y}">${escapeXml(node.label)}</text></g>`
+    const key = node.label.toUpperCase().replace(/\s+/g, '-')
+    const op = opcodes[key] || 'OP_UNKNOWN'
+    const badge = op === 'OP_NIL' ? ' ·NIL·' : op === 'OP_QUBIT' ? ' ·Q·' : ''
+    return `<g class="node ${node.type.toLowerCase()} op-${op.toLowerCase().replace(/_/g,'-')}"><rect x="${p.x - w / 2}" y="${p.y - 18}" width="${w}" height="36"/><text x="${p.x}" y="${p.y - 1}">${escapeXml(node.label)}${badge}</text></g>`
   }).join('\n')
   return `<svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">${defs}<rect width="${width}" height="${height}" fill="#05060a"/><text x="24" y="26" fill="#aab4c4" font-family="monospace" font-size="13">spatial hash ${spatialHash.slice(0, 24)}...</text>${edges}${nodes}</svg>`
+}
+
+function spectrumBar(pos) {
+  const width = 12
+  const filled = Math.round(pos * width)
+  const bar = '█'.repeat(filled) + '░'.repeat(width - filled)
+  return `[${bar}]`
+}
+
+function renderSpectrum(instructions) {
+  const el = document.getElementById('spectrum-panel')
+  if (!instructions.length) { el.innerHTML = ''; return }
+  const sorted = [...instructions].sort((a, b) => b.abjad - a.abjad)
+  const rows = sorted.map((item) => {
+    const pct = Math.round(item.spectrumPos * 100)
+    const color = item.op === 'OP_NIL'   ? '#f97316'
+                : item.op === 'OP_QUBIT' ? '#7c3aed'
+                : item.op === 'OP_QUANTUM' || item.op.startsWith('OP_PLANNER') ? '#8bd4ff'
+                : item.abjad >= 200      ? '#00ff88'
+                : '#aab4c4'
+    return `<div class="sp-row">
+      <span class="sp-label" style="color:${color}">${item.op}</span>
+      <div class="sp-bar-wrap"><div class="sp-bar" style="width:${pct}%;background:${color}"></div></div>
+      <span class="sp-val">${item.abjad}</span>
+      <span class="sp-name">${item.label}</span>
+    </div>`
+  }).join('')
+  el.innerHTML = `
+    <div class="sp-axis">
+      <span style="color:#f97316">NIL 910 ←</span>
+      <span style="color:#7c3aed">QUBIT 518</span>
+      <span style="color:#aab4c4">→ CLASSICAL 90</span>
+      <span style="color:#333">→ VACUUM 0</span>
+    </div>
+    ${rows}`
 }
 
 function corruptOneChar() {

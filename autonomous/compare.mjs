@@ -10,22 +10,44 @@
  *   - Deterministic logic path: Prolog rules are constants
  *   - Genuine novelty: QRNG seeds each decision point
  *
- * LLM (Ollama/local):
- *   - Prompt → transformer attention → next token prediction → output
- *   - Can hallucinate: no formal gate
- *   - Black box: no trace
- *   - Stochastic: temperature + sampling, no verifiable source of randomness
+ * LLM providers supported:
+ *   groq     — Llama 3.3 70B via Groq LPU (fastest, free tier)
+ *   gpt4o    — GPT-4o via OpenAI
+ *   gemini   — Gemini 2.0 Flash via Google
+ *   ollama   — Local Ollama (default, nemotron)
  *
- * The comparison shows what BOB can and cannot do better.
- * BOB wins on: verifiability, auditability, logic chains, routing decisions.
- * LLM wins on: natural language generation, general knowledge, creativity.
- * Together: LLM as subcomponent of BOB — the sovereign model.
+ * Usage: node compare.mjs [task] [provider]
+ *   node compare.mjs all groq
+ *   node compare.mjs logic_chain gpt4o
  */
 
-import { agentTick }    from './autonomous_agent.mjs'
-import { holyc_nil }    from './holyc_nil.mjs'
+import { holyc_nil }     from './holyc_nil.mjs'
 import { emoji_trigger } from './emoji_trigger.mjs'
-import { createHash }   from 'crypto'
+import { createHash }    from 'crypto'
+
+// ── API keys (read from env files — never ask the user) ───────────────────────
+import { readFileSync, existsSync } from 'fs'
+import { join } from 'path'
+
+function loadEnv(path) {
+  if (!existsSync(path)) return {}
+  const out = {}
+  readFileSync(path, 'utf8').split('\n').forEach(line => {
+    const [k, ...v] = line.split('=')
+    if (k && !k.startsWith('#')) out[k.trim()] = v.join('=').trim()
+  })
+  return out
+}
+
+const ENV = {
+  ...loadEnv(join('C:/Users/jessi/Desktop/bobs control repo/DEVFLOW-FINANCE/collectivekitty/.env')),
+  ...loadEnv(join('C:/Users/jessi/Desktop/bobs control repo/DEVFLOW-FINANCE/collectivekitty/.env.local')),
+  ...loadEnv(join('C:/Users/jessi/Desktop/bobs control repo/DEVFLOW-FINANCE/.env')),
+}
+
+const GROQ_KEY   = ENV.GROQ_API_KEY   || process.env.GROQ_API_KEY
+const OPENAI_KEY = ENV.OPENAI_API_KEY || process.env.OPENAI_API_KEY
+const GEMINI_KEY = ENV.GEMINI_API_KEY || process.env.GEMINI_API_KEY
 
 // ── Test tasks — things where the comparison is meaningful ────────────────────
 
@@ -73,26 +95,114 @@ async function fetchQuantumBytes(n = 8) {
   return { bytes: new Uint8Array(randomBytes(n)), source: 'CSPRNG_FALLBACK' }
 }
 
-// ── Ask LLM via Ollama ────────────────────────────────────────────────────────
+// ── LLM providers ─────────────────────────────────────────────────────────────
 
-async function askLLM(prompt, model = 'nemotron', host = 'http://localhost:11434') {
+async function askLLM(prompt, provider = 'groq') {
   const start = Date.now()
+
+  // Groq — Llama 3.3 70B — fastest top model, LPU inference
+  if (provider === 'groq') {
+    if (!GROQ_KEY) return { reply: null, ms: 0, error: 'No GROQ_API_KEY found' }
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: 'You are a precise AI assistant. Answer concisely and correctly.' },
+            { role: 'user',   content: prompt }
+          ],
+          max_tokens: 400,
+          temperature: 0.1,
+        }),
+        signal: AbortSignal.timeout(15_000)
+      })
+      if (!res.ok) {
+        const err = await res.text()
+        return { reply: null, ms: Date.now() - start, error: `Groq ${res.status}: ${err.slice(0,120)}` }
+      }
+      const j = await res.json()
+      const reply = j.choices?.[0]?.message?.content || null
+      const tokens = j.usage?.completion_tokens || 0
+      const speed  = j.usage ? `${Math.round(tokens / ((Date.now()-start)/1000))} tok/s` : ''
+      return { reply, ms: Date.now() - start, source: `Groq · Llama-3.3-70B ${speed}`, tokens }
+    } catch (e) {
+      return { reply: null, ms: Date.now() - start, error: e.message }
+    }
+  }
+
+  // OpenAI — GPT-4o
+  if (provider === 'gpt4o') {
+    if (!OPENAI_KEY) return { reply: null, ms: 0, error: 'No OPENAI_API_KEY found' }
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: 'You are a precise AI assistant. Answer concisely and correctly.' },
+            { role: 'user',   content: prompt }
+          ],
+          max_tokens: 400,
+          temperature: 0.1,
+        }),
+        signal: AbortSignal.timeout(20_000)
+      })
+      if (!res.ok) {
+        const err = await res.text()
+        return { reply: null, ms: Date.now() - start, error: `OpenAI ${res.status}: ${err.slice(0,120)}` }
+      }
+      const j = await res.json()
+      return { reply: j.choices?.[0]?.message?.content || null, ms: Date.now() - start, source: 'OpenAI · GPT-4o', tokens: j.usage?.completion_tokens }
+    } catch (e) {
+      return { reply: null, ms: Date.now() - start, error: e.message }
+    }
+  }
+
+  // Gemini 2.0 Flash
+  if (provider === 'gemini') {
+    if (!GEMINI_KEY) return { reply: null, ms: 0, error: 'No GEMINI_API_KEY found' }
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 400, temperature: 0.1 }
+        }),
+        signal: AbortSignal.timeout(15_000)
+      })
+      if (!res.ok) {
+        const err = await res.text()
+        return { reply: null, ms: Date.now() - start, error: `Gemini ${res.status}: ${err.slice(0,120)}` }
+      }
+      const j = await res.json()
+      const reply = j.candidates?.[0]?.content?.parts?.[0]?.text || null
+      return { reply, ms: Date.now() - start, source: 'Google · Gemini-2.0-Flash' }
+    } catch (e) {
+      return { reply: null, ms: Date.now() - start, error: e.message }
+    }
+  }
+
+  // Ollama fallback (local)
   try {
-    const res = await fetch(`${host}/api/chat`, {
+    const res = await fetch('http://localhost:11434/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model,
+        model: provider,
         messages: [{ role: 'user', content: prompt }],
         stream: false
       }),
-      signal: AbortSignal.timeout(20_000)
+      signal: AbortSignal.timeout(30_000)
     })
-    if (!res.ok) return { reply: null, ms: Date.now() - start, error: `HTTP ${res.status}` }
+    if (!res.ok) return { reply: null, ms: Date.now() - start, error: `Ollama HTTP ${res.status}` }
     const j = await res.json()
-    return { reply: j.message?.content || j.response || null, ms: Date.now() - start, source: `ollama:${model}` }
+    return { reply: j.message?.content || j.response || null, ms: Date.now() - start, source: `Ollama · ${provider}` }
   } catch (e) {
-    return { reply: null, ms: Date.now() - start, error: e.message }
+    return { reply: null, ms: Date.now() - start, error: `Ollama offline: ${e.message}` }
   }
 }
 
@@ -219,20 +329,32 @@ function renderComparison(task, bob, llm) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-const taskId = process.argv[2] || 'all'
-const model  = process.argv[3] || 'nemotron'
-const tasks  = taskId === 'all' ? TEST_TASKS : TEST_TASKS.filter(t => t.id === taskId)
+const taskId   = process.argv[2] || 'all'
+const provider = process.argv[3] || 'groq'
+const tasks    = taskId === 'all' ? TEST_TASKS : TEST_TASKS.filter(t => t.id === taskId)
 
-console.log('\n  BOB vs LLM — Sovereign Comparison Harness')
-console.log('  HolyC NIL + EmojiCode QRNG + Prolog + Ada + WORM  vs  Transformer\n')
+const providerLabel = {
+  groq:   'Groq · Llama-3.3-70B',
+  gpt4o:  'OpenAI · GPT-4o',
+  gemini: 'Google · Gemini-2.0-Flash',
+}[provider] || `Ollama · ${provider}`
+
+console.log('\n  ══════════════════════════════════════════════════════════════════')
+console.log('   BOB  vs  ' + providerLabel)
+console.log('   Quantum-Seeded Logic Machine  vs  Transformer LLM')
+console.log('  ══════════════════════════════════════════════════════════════════')
 
 for (const task of tasks) {
   const [bob, llm] = await Promise.all([
     askBOB(task),
-    askLLM(task.prompt, model)
+    askLLM(task.prompt, provider)
   ])
   renderComparison(task, bob, llm)
 }
 
-console.log('\n  Run with: node autonomous/compare.mjs [task_id] [model]')
-console.log('  Tasks: logic_chain  agent_routing  abjad_question  trust_decision  all\n')
+console.log('\n  ── HOW TO RUN ──────────────────────────────────────────────────────')
+console.log('  node autonomous/compare.mjs all groq')
+console.log('  node autonomous/compare.mjs all gpt4o')
+console.log('  node autonomous/compare.mjs all gemini')
+console.log('  node autonomous/compare.mjs logic_chain groq')
+console.log('  Tasks: logic_chain · agent_routing · abjad_question · trust_decision · all\n')

@@ -11,7 +11,11 @@
     "demo":       "node bridge/demo.mjs",
     "tessera":    "node tessera/tessera_demo.mjs",
     "studio":     "node tessera/studio_server.mjs",
-    "gitdos":     "node tessera/studio_server.mjs"
+    "gitdos":     "node tessera/studio_server.mjs",
+    "nil":        "node autonomous/holyc_nil.mjs",
+    "emoji":      "node autonomous/emoji_trigger.mjs",
+    "agent":      "node autonomous/autonomous_agent.mjs",
+    "compare":    "node autonomous/compare.mjs"
   },
   "dependencies": {
     "@snapkitty/mcp-server": "file:../snapkitty-mcp"

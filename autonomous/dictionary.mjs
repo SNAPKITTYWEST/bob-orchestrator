@@ -530,6 +530,54 @@ const TOPICS = {
     emoji: '⚡🛡️',
   },
 
+  aerospace: {
+    keywords: ['aerospace', 'aviati', 'aircraft', 'rocket', 'orbit', 'satellite', 'astronaut', 'spacecraft', 'propulsion', 'aerodynamics', 'aviation', 'flight'],
+    sovereign: 'Aerospace is the Ada contract for physics. Pre-condition: lift exceeds drag. Post-condition: structural integrity intact. Invariant: control authority maintained. The gate does not negotiate — either the system satisfies its contracts or it does not return.',
+    practice: [
+      'Understand the failure mode before the success mode',
+      'Redundancy is not backup — it is the formal proof the invariant holds under component failure',
+      'Every component has a contract. Integration is the proof that contracts compose correctly',
+      'Margin is not waste — it is the buffer between nominal operation and the edge case',
+    ],
+    emoji: '⚡🜁',
+  },
+
+  cooking: {
+    keywords: ['cook', 'culinar', 'recipe', 'ingredient', 'kitchen', 'flavor', 'bake', 'grill', 'cuisine', 'chef', 'food preparation', 'saut'],
+    sovereign: 'Cooking is applied chemistry with a sensory output. Mise en place is the pre-condition — everything prepared before the gate opens. Heat is the irreversible operator: it transforms, it cannot un-transform. The WORM chain of flavor is built incrementally, not corrected at the end.',
+    practice: [
+      'Master one technique completely before adding more — roasting, braising, or sautéing',
+      'Taste at every stage. Flavor is a chain, not a single moment',
+      'The recipe is a specification, not a law — understand the law before you modify it',
+      'Salt, acid, fat, heat: learn what each does independently before combining them',
+    ],
+    emoji: '🜁🌒',
+  },
+
+  psychology: {
+    keywords: ['psycholog', 'behav', 'cognit', 'mental health', 'brain science', 'thought pattern', 'emotion', 'therap', 'unconscious', 'motivat', 'habit', 'mind science'],
+    sovereign: 'Psychology maps the SSM hidden state of the human system. Behavior is the output; the state that produced it is invisible. You cannot change the output without changing the state — and you cannot change the state by addressing only the output.',
+    practice: [
+      'Trace the function before targeting the behavior. What does it achieve for the person?',
+      'Behavior follows reinforcement history — understand the chain before judging the output',
+      'Attention is the gate. Whatever receives attention is strengthened, regardless of intent',
+      'The fastest path to changing behavior: change the environment before changing the person',
+    ],
+    emoji: '🧠🌒',
+  },
+
+  athletics: {
+    keywords: ['sport', 'athletic', 'training', 'compete', 'perform', 'race', 'player', 'coach', 'strength', 'endurance', 'fitness goal', 'exercise science', 'workout'],
+    sovereign: 'Athletic performance is a formal verification problem. The body is the Ada contract running on hardware. Every session is a pre-condition check: is the system ready for this load? Every performance is a proof run: does the preparation hold under pressure?',
+    practice: [
+      'Consistency over intensity. Adaptation is built by showing up, not by peaks',
+      'Recovery is not rest — it is the consolidation phase. Skip it and the training is lost',
+      'Track what you do. You cannot improve what you cannot measure',
+      'Specificity: train for the exact demands of the performance, not for general fitness',
+    ],
+    emoji: '🜁⚡',
+  },
+
 }
 
 // ── Oracle lens table — each oracle word's interpretive angle ─────────────────
@@ -577,16 +625,16 @@ const ORACLE_LENS = {
   LOCK:      'secured state — find what must be held constant for the system to remain stable',
   QUBIT:     'superposition — hold multiple answers simultaneously before committing to one',
   // All SACRED_WORDS covered
-  LEAN:      'minimal proof — derive the smallest formal argument that still closes the theorem',
-  QUANTUM:   'superposed states — hold the question open until observation collapses it to one answer',
+  LEAN:      'minimal form — find the smallest complete version, nothing more and nothing less',
+  QUANTUM:   'held ambiguity — keep the question open until the moment observation forces a choice',
   TRUST:     'earned proof — build the checkable derivation; do not claim, demonstrate',
   KINGDOM:   'governed domain — define the boundary, then rule within it with consistent law',
   ORACLE:    'entropy source — let the randomness reveal what the rational mind resists',
   PLANNER:   'antecedent firing — map preconditions first, let the correct action select itself',
-  ACTOR:     'message-passing — each unit does one thing and communicates results, not state',
-  HEWITT:    'pattern-directed — the rule fires when the pattern matches, no explicit dispatch',
-  PATTERN:   'recurring structure — find what repeats and encode it once',
-  MATCH:     'unification — find the substitution that makes both sides identical',
+  ACTOR:     'isolated responsibility — each part does one job and communicates results, not internals',
+  HEWITT:    'pattern-triggered — when conditions match, the correct response fires without being told',
+  PATTERN:   'recurring structure — find what repeats across instances and name it once',
+  MATCH:     'common ground — find where the two things are already the same before forcing alignment',
   LIL:       'first Aethyr — approach from the highest possible frame before descending to detail',
   ARN:       'trial and forging — trust is not given here, it is earned through the difficult path',
   ZOM:       'undistorted signal — transmit without adding noise; the hash must match',
@@ -708,6 +756,49 @@ export function sovereignAnswer(sentence, oracleWord, emojiSeq) {
   }
 
   return out
+}
+
+// ── Synthesis fallback — for topics not in DICT or TOPICS ────────────────────
+// Generates natural flowing prose for any subject using the oracle word as the lens.
+// This is the "tongue" — the layer that turns oracle + topic into connected sentences.
+
+const SUBJECT_STOP = new Set([
+  'what','whats','how','when','where','why','who','is','are','was','were',
+  'the','a','an','to','of','in','and','or','do','does','can','tell','me',
+  'about','best','way','good','some','this','that','those','these','with',
+  'for','from','have','has','had','will','would','could','should',
+  'explain','describe','give','help','understand','know','think','want',
+  'you','your','get','make','use','see','say','like','very','just','really',
+])
+
+export function synthesizeTopic(input, oracleWord, emojiSeq) {
+  const subject = input.toLowerCase()
+    .replace(/[^a-z\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !SUBJECT_STOP.has(w))
+    .pop() || 'this'
+
+  const lens = ORACLE_LENS[oracleWord]
+  if (!lens) return null
+
+  const dash  = lens.indexOf(' — ')
+  const verb  = dash >= 0 ? lens.slice(0, dash) : oracleWord.toLowerCase()
+  const body  = dash >= 0 ? lens.slice(dash + 3) : lens
+
+  const sub  = subject.charAt(0).toUpperCase() + subject.slice(1)
+  const Verb = verb.charAt(0).toUpperCase() + verb.slice(1)
+  const Body = body.charAt(0).toUpperCase() + body.slice(1)
+
+  return [
+    `${sub.toUpperCase()} · ${oracleWord}`,
+    ``,
+    `${Verb}: ${Body}.`,
+    ``,
+    `Find where ${subject} demands ${verb} — that is the lever.`,
+    `The practitioners who got ${subject} right are the ones worth studying.`,
+    ``,
+    `Oracle: ${oracleWord} · ${emojiSeq}`,
+  ].join('\n')
 }
 
 // ── CLI test ──────────────────────────────────────────────────────────────────

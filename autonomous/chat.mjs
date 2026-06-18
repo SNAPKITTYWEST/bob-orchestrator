@@ -27,7 +27,7 @@
 import readline          from 'readline'
 import { holyc_nil }     from './holyc_nil.mjs'
 import { emoji_trigger } from './emoji_trigger.mjs'
-import { sovereignAnswer, oracleAnswer, topicAnswer, extractConcepts, lookup } from './dictionary.mjs'
+import { sovereignAnswer, oracleAnswer, topicAnswer, synthesizeTopic, extractConcepts, lookup } from './dictionary.mjs'
 import { img2ascii, ascii3d, pythonAvailable } from '../ascii/bob_ascii.mjs'
 import { createHash }    from 'crypto'
 import { readFileSync, existsSync, writeFileSync } from 'fs'
@@ -251,18 +251,20 @@ function buildAnswer(input, route, gate, nil, trigger) {
       `just working code — it is a proof. ${seq}`,
     ].join('\n')
 
-  // Default — look up the oracle word itself directly (handles short words like ARN, NUN, ZID)
+  // Try the oracle word directly (handles ARN, NUN, ZID, LIL, etc.)
   const fromOracle = oracleAnswer(word, seq)
   if (fromOracle) return fromOracle
 
-  // True fallback — oracle word not in dictionary yet
+  // Synthesis fallback — apply oracle word as lens to the topic, generating natural prose
+  const synthesis = synthesizeTopic(input, word, seq)
+  if (synthesis) return synthesis
+
+  // Absolute last resort — oracle word unknown, topic unknown
   return [
     `${word} ${seq}`,
     ``,
     `The oracle speaks "${word}".`,
-    `Abjad: ${[...word].reduce((s,c) => s + (c.charCodeAt(0) % 26 + 1), 0)} · WORM sealed · Ada cleared.`,
-    `Ask about any concept — life, truth, wisdom, freedom, love, purpose,`,
-    `justice, trust, soul, void, fire, gate, seal, nun, lam, oracle, spirit.`,
+    `WORM sealed · Ada cleared.`,
   ].join('\n')
 }
 

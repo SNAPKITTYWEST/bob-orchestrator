@@ -306,4 +306,134 @@ if (process.argv.includes('--test')) {
   console.log('\n  BOB is sovereign. The gate holds.\n')
 }
 
+// ── HolyC CLI modes ──────────────────────────────────────────────────────────
+
+if (process.argv.includes('--holy-test')) {
+  const { runHolyC }   = await import('../holyc/holy_runtime.mjs')
+  const { detectMode } = await import('../holyc/holy_sandbox_policy.mjs')
+
+  console.log('\n  BOB HolyC Gate — sovereign test suite\n')
+
+  const mode = detectMode()
+  console.log(`  HOLYC MODE: ${mode}\n`)
+
+  // Seed the agent registry
+  const sentinel = createAgent('SENTINEL-HC', 'SENTINEL', ['write', 'seal', 'block', 'read'])
+  const builder  = createAgent('BUILDER-HC',  'BUILDER',  ['write', 'read', 'generate', 'seal'])
+  const oracle   = createAgent('ORACLE-HC',   'ORACLE',   ['read', 'analyze'])
+
+  // Test 1: SENTINEL boot sequence
+  console.log('  ① SENTINEL runs boot.HC')
+  const { readFileSync } = await import('fs')
+  const { join }         = await import('path')
+  const bootSrc = readFileSync(join(import.meta.dirname, '../holyc/holy_examples/boot.HC'), 'utf8')
+
+  const boot = await runHolyC({ source: bootSrc, task: 'holyc_execution', worm, agents, createAgent })
+  const bootPass = boot.gate_passed
+  console.log(`     ADA CONTRACT:  ${boot.ada_contract?.result}`)
+  console.log(`     LEAN PROOF:    ${boot.theorem_valid ? 'VALID' : 'INVALID'}`)
+  console.log(`     PROLOG AGENT:  ${boot.prolog_agent}`)
+  boot.holyc_output.slice(0, 3).forEach(l => console.log(`     │ ${l}`))
+  console.log(`     WORM SEAL:     ${boot.worm_seal?.slice(0, 32) ?? 'none'}…`)
+  console.log(`     RESULT:        ${bootPass ? 'PASSED' : 'FAILED'}`)
+  console.log()
+
+  // Test 2: Ada blocks ORACLE from HolyC execution
+  console.log('  ② Ada blocks ORACLE from HolyC')
+  const { Can_Invoke_HolyC } = await import('../ada/ada_gate.mjs')
+  const oracleHC = Can_Invoke_HolyC('ORACLE', mode)
+  const oracleBlocked = oracleHC.result === 'DENIED'
+  console.log(`     ADA RESULT:    ${oracleHC.result}`)
+  console.log(`     REASON:        ${oracleHC.reason}`)
+  console.log(`     RESULT:        ${oracleBlocked ? 'CORRECTLY BLOCKED' : 'ERROR — should be blocked'}`)
+  console.log()
+
+  // Test 3: agent_status.HC
+  console.log('  ③ BUILDER runs agent_status.HC')
+  const statusSrc = readFileSync(join(import.meta.dirname, '../holyc/holy_examples/agent_status.HC'), 'utf8')
+  const status = await runHolyC({ source: statusSrc, task: 'holyc_execution', worm, agents, createAgent })
+  console.log(`     ADA CONTRACT:  ${status.ada_contract?.result}`)
+  console.log(`     WORM EVENTS:   ${status.holyc_events?.length ?? 0} sealed`)
+  console.log(`     WORM SEAL:     ${status.worm_seal?.slice(0, 32) ?? 'none'}…`)
+  console.log(`     RESULT:        ${status.gate_passed ? 'PASSED' : 'FAILED'}`)
+  console.log()
+
+  // Test 4: worm_seal.HC
+  console.log('  ④ worm_seal.HC — 3 chained events')
+  const wormSrc = readFileSync(join(join(import.meta.dirname, '../holyc/holy_examples/worm_seal.HC')), 'utf8')
+  const wormRun = await runHolyC({ source: wormSrc, task: 'holyc_execution', worm, agents, createAgent })
+  console.log(`     EVENTS SEALED: ${wormRun.holyc_events?.length ?? 0}`)
+  console.log(`     CHAIN LENGTH:  ${worm.load().length}`)
+  console.log(`     CHAIN VALID:   ${worm.verify().valid}`)
+  console.log(`     RESULT:        ${wormRun.gate_passed ? 'PASSED' : 'FAILED'}`)
+  console.log()
+
+  const allPass = bootPass && oracleBlocked && status.gate_passed && wormRun.gate_passed
+  console.log(`  ${allPass ? '✓  All HolyC gate tests passed' : '✗  Some tests failed'}`)
+  console.log('  The gate holds. No host machine code executed.\n')
+}
+
+if (process.argv.includes('--holy-run')) {
+  const idx  = process.argv.indexOf('--holy-run')
+  const file = process.argv[idx + 1]
+  if (!file) { console.error('Usage: node core/bob.mjs --holy-run <path.HC>'); process.exit(1) }
+
+  const { readFileSync }  = await import('fs')
+  const { resolve }       = await import('path')
+  const { runHolyC }      = await import('../holyc/holy_runtime.mjs')
+  const { detectMode }    = await import('../holyc/holy_sandbox_policy.mjs')
+
+  const source = readFileSync(resolve(file), 'utf8')
+  const mode   = detectMode()
+
+  console.log(`\n  BOB HolyC Runtime`)
+  console.log(`  File:  ${file}`)
+  console.log(`  Mode:  ${mode}\n`)
+
+  createAgent('BUILDER-RUN', 'BUILDER', ['write', 'read', 'generate', 'seal'])
+
+  const r = await runHolyC({ source, task: 'holyc_execution', worm, agents, createAgent })
+
+  console.log(`  HOLYC MODE:    ${r.mode}`)
+  console.log(`  ADA CONTRACT:  ${r.ada_contract?.result ?? 'N/A'} — ${r.ada_contract?.reason ?? ''}`)
+  console.log(`  LEAN PROOF:    ${r.theorem_valid ? 'VALID' : 'INVALID'}`)
+  console.log(`  PROLOG AGENT:  ${r.prolog_agent}`)
+  console.log()
+  if (r.error) { console.error(`  ERROR: ${r.error}\n`); process.exit(1) }
+  r.holyc_output.forEach(l => console.log(`  │ ${l}`))
+  console.log()
+  console.log(`  WORM SEAL:     ${r.worm_seal}`)
+  if (r.ollama_reply) console.log(`  OLLAMA:        ${r.ollama_reply.slice(0, 120)}`)
+  console.log(`  RESULT:        ${r.gate_passed ? 'OK' : 'FAILED'}\n`)
+}
+
+if (process.argv.includes('--gate-report')) {
+  const { gateReport }    = await import('../ada/ada_gate.mjs')
+  const { detectMode, policyReport } = await import('../holyc/holy_sandbox_policy.mjs')
+
+  const mode = detectMode()
+  console.log('\n  BOB Ada Gate Report\n')
+
+  const classes = ['SENTINEL', 'ORACLE', 'BUILDER', 'ARCHIVIST', 'BERSERKER']
+  const trusts  = { SENTINEL: 'SOVEREIGN', ORACLE: 'HIGH', BUILDER: 'HIGH', ARCHIVIST: 'HIGH', BERSERKER: 'MEDIUM' }
+
+  for (const cls of classes) {
+    const trust  = trusts[cls]
+    const report = gateReport(cls, trust, mode)
+    console.log(`  ${cls} (${trust})`)
+    for (const [gate, outcome] of Object.entries(report.gates)) {
+      const icon = outcome.result === 'ALLOWED' ? '✓' : '✗'
+      console.log(`    ${icon}  ${gate}: ${outcome.result}`)
+      if (outcome.result === 'DENIED') console.log(`          → ${outcome.reason}`)
+    }
+    console.log()
+  }
+
+  const policy = policyReport(mode)
+  console.log(`  Policy: ${policy.note}`)
+  console.log(`  Mode:   ${policy.mode}`)
+  console.log(`  Absolute deny: ${policy.absolute_deny.join(', ')}`)
+  console.log()
+}
+
 export { createAgent, sovereignStep, worm, ada, lean, ssm, prolog, agents }

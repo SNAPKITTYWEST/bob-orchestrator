@@ -153,7 +153,7 @@ function buildTessera(pairs) {
 
 // ── CLI test ──────────────────────────────────────────────────────────────────
 
-if (process.argv[1].endsWith('emoji_trigger.mjs')) {
+if (process.argv[1]?.endsWith('emoji_trigger.mjs')) {
   console.log('\n  Emoji Trigger — Quantum → Emoji → Opcode\n')
 
   const bytes = new Uint8Array([200, 130, 45, 180, 90, 220, 15, 160])

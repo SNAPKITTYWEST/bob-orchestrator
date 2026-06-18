@@ -110,7 +110,7 @@ export async function ascii3d(shape = 'torus', opts = {}) {
 
 // ── CLI test ──────────────────────────────────────────────────────────────────
 
-if (process.argv[1].endsWith('bob_ascii.mjs')) {
+if (process.argv[1]?.endsWith('bob_ascii.mjs')) {
   const mode  = process.argv[2] || '3d'
   const shape = process.argv[3] || 'torus'
 

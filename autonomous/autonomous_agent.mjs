@@ -274,7 +274,7 @@ export async function runAgent(ticks = 5, opts = {}) {
 
 // ── CLI ───────────────────────────────────────────────────────────────────────
 
-if (process.argv[1].endsWith('autonomous_agent.mjs')) {
+if (process.argv[1]?.endsWith('autonomous_agent.mjs')) {
   const ticks = parseInt(process.argv[2]) || 6
   await runAgent(ticks, { verbose: true, delayMs: 300 })
 }

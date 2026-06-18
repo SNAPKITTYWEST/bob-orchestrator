@@ -133,7 +133,7 @@ export function holyc_oracle_batch(quantumBytes, n = 4) {
 
 // ── CLI test ──────────────────────────────────────────────────────────────────
 
-if (process.argv[1].endsWith('holyc_nil.mjs')) {
+if (process.argv[1]?.endsWith('holyc_nil.mjs')) {
   console.log('\n  HolyC NIL — Ground State Oracle\n')
 
   const NIL_bytes  = new Uint8Array([3, 1, 8, 2, 5, 4, 7, 3])    // low entropy → NIL

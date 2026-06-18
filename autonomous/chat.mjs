@@ -1,29 +1,33 @@
 /**
  * BOB Chat — Sovereign Logic Machine
  *
- * The internal machinery runs silently:
- *   QRNG → HolyC NIL → Emoji Trigger → Prolog → Ada Gate → WORM
+ * BOB produces words from: QRNG → HolyC NIL → Dictionary → Prolog → Ada → WORM
+ * No LLM required. No Ollama required. BOB is self-contained.
  *
- * What you see is the answer — not the wiring.
- * The emoji in the response ARE the wiring, encoded.
+ * The right panel (Groq/GPT-4o/Gemini) is optional comparison only.
+ * Run --solo to get pure BOB with no external connections at all.
  *
  * Usage:
- *   node autonomous/chat.mjs            (default: groq)
- *   node autonomous/chat.mjs groq
- *   node autonomous/chat.mjs gpt4o
- *   node autonomous/chat.mjs gemini
- *   node autonomous/chat.mjs groq --verbose   (show internal routing)
+ *   node autonomous/chat.mjs               BOB only — zero external calls (DEFAULT)
+ *   node autonomous/chat.mjs --verbose     BOB only + show internal routing
+ *   node autonomous/chat.mjs groq          BOB + Groq comparison side panel
+ *   node autonomous/chat.mjs gpt4o         BOB + GPT-4o side panel
+ *   node autonomous/chat.mjs gemini        BOB + Gemini side panel
+ *   node autonomous/chat.mjs --compare     BOB + Groq (explicit compare flag)
  *
- * Commands:
- *   /worm        — show sealed WORM history
- *   /agent       — run a live autonomous tick
- *   /quit        — exit
+ * Commands inside chat:
+ *   /worm              show sealed WORM history
+ *   /agent             run a live autonomous tick
+ *   /3d [shape]        render 3D ASCII (torus cube sphere pyramid bob)
+ *   /3d torus --anim   animated rotation
+ *   /img [path]        convert image to ASCII
+ *   /quit              exit
  */
 
 import readline          from 'readline'
 import { holyc_nil }     from './holyc_nil.mjs'
 import { emoji_trigger } from './emoji_trigger.mjs'
-import { sovereignAnswer, extractConcepts } from './dictionary.mjs'
+import { sovereignAnswer, extractConcepts, lookup } from './dictionary.mjs'
 import { img2ascii, ascii3d, pythonAvailable } from '../ascii/bob_ascii.mjs'
 import { createHash }    from 'crypto'
 import { readFileSync, existsSync, writeFileSync } from 'fs'
@@ -32,8 +36,12 @@ import { join }          from 'path'
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const args     = process.argv.slice(2)
-const provider = args.find(a => !a.startsWith('--')) || 'groq'
+// Solo is DEFAULT — BOB runs alone with zero external LLM connections
+// Add --compare (or a provider name) to show the LLM side panel
+const COMPARE  = args.includes('--compare') || args.some(a => ['groq','gpt4o','gemini','ollama'].includes(a))
+const SOLO     = !COMPARE
 const VERBOSE  = args.includes('--verbose') || args.includes('-v')
+const provider = args.find(a => !a.startsWith('--') && !['solo'].includes(a)) || 'groq'
 
 // ── Load API keys ─────────────────────────────────────────────────────────────
 
@@ -241,14 +249,22 @@ function buildAnswer(input, route, gate, nil, trigger) {
       `just working code — it is a proof. ${seq}`,
     ].join('\n')
 
-  // Default — BOB has no dictionary entry and no specific route, but still speaks
+  // Default — look up the oracle word itself in the dictionary
+  // Every SACRED_WORD has an entry, so BOB always has something to say
+  const oracleEntry = lookup(word.toLowerCase())
+  if (oracleEntry) {
+    return sovereignAnswer(word.toLowerCase(), word, seq)
+  }
+
+  // True fallback — oracle word unknown even to the dictionary
   return [
     `${word} ${seq}`,
     ``,
-    `Sovereign: The oracle selected "${word}" from quantum vacuum fluctuations.`,
-    `Route: ${route.agent}. The Ada gate cleared. The WORM sealed this moment.`,
-    `The system has no more to say — ask about: life, truth, wisdom, freedom,`,
-    `love, purpose, justice, trust, time, soul, or any system concept.`,
+    `The oracle speaks "${word}" — a word not yet in the dictionary.`,
+    `Abjad weight by letter sum: ${[...word].reduce((s,c) => s + (c.charCodeAt(0) % 26 + 1), 0)}.`,
+    `The WORM sealed this moment. Ask about: life, truth, wisdom, freedom,`,
+    `love, purpose, justice, trust, time, soul, void, fire, gate, seal,`,
+    `nun, lam, qaf, yaa, baa, waw, lil, zid, oracle, spirit, kingdom.`,
   ].join('\n')
 }
 
@@ -349,6 +365,28 @@ async function askLLM(input, llmProvider, history) {
   } catch { return { reply:`[Ollama offline]`, ms:Date.now()-start } }
 }
 
+// ── Solo render — BOB only, no LLM panel ─────────────────────────────────────
+
+function renderBOBOnly(bob) {
+  const w  = Math.min(process.stdout.columns || 72, 76)
+  const hr = '─'.repeat(w - 2)
+  const G  = '\x1b[32m'
+  const DIM= '\x1b[2m'
+  const R  = '\x1b[0m'
+
+  process.stdout.write(`\n  ${G}╔══ BOB${R}${hr.slice(6)}\n`)
+  process.stdout.write(wrapText(bob.answer, `  ${G}║${R}  `, w) + '\n')
+
+  if (VERBOSE) {
+    process.stdout.write(`  ${G}║${R}  ${DIM}${hr.slice(4)}${R}\n`)
+    process.stdout.write(`  ${G}║${R}  ${DIM}Oracle: ${bob.nil.word || 'NIL'}  ${bob.trigger.sequence}  ${bob.route.agent} → ${bob.route.action}${R}\n`)
+    process.stdout.write(`  ${G}║${R}  ${DIM}Abjad: ${bob.route.abjad}  Ada: ${bob.gate.ok ? 'ALLOWED' : 'DENIED'}  SSM: ${bob.newState.toFixed(4)}${R}\n`)
+    process.stdout.write(`  ${G}║${R}  ${DIM}WORM: ${bob.seal.slice(0,40)}…${R}\n`)
+  }
+
+  process.stdout.write(`  ${G}╚${R}${hr.slice(1)}\n\n`)
+}
+
 // ── Render a turn ─────────────────────────────────────────────────────────────
 // BOB: clean answer only. Routing stays invisible in WORM.
 // Verbose mode (--verbose): exposes the internal routing beneath the answer.
@@ -424,8 +462,12 @@ process.stdout.write('  \x1b[32m██████╔╝██║   ██║█
 process.stdout.write('  \x1b[32m██╔══██╗██║   ██║██╔══██╗\x1b[0m\n')
 process.stdout.write('  \x1b[32m██████╔╝╚██████╔╝██████╔╝\x1b[0m\n')
 process.stdout.write('  \x1b[32m╚═════╝  ╚═════╝ ╚═════╝\x1b[0m\n')
-process.stdout.write(`\n  Sovereign Logic Machine  ↔  \x1b[36m${llmLabel}\x1b[0m\n`)
-process.stdout.write('  All reasoning sealed in WORM — hidden by design\x1b[0m\n')
+if (SOLO) {
+  process.stdout.write(`\n  Sovereign Logic Machine  \x1b[2m[solo — no external LLM]\x1b[0m\n`)
+} else {
+  process.stdout.write(`\n  Sovereign Logic Machine  ↔  \x1b[36m${llmLabel}\x1b[0m\n`)
+}
+process.stdout.write('  QRNG → NIL → Dictionary → Prolog → Ada → WORM\n')
 if (VERBOSE) process.stdout.write('  \x1b[33m[VERBOSE] Internal routing visible\x1b[0m\n')
 process.stdout.write('  \x1b[2m/worm  /agent  /3d [shape]  /img [path]  /quit\x1b[0m\n\n')
 
@@ -498,16 +540,20 @@ function prompt() {
 
     process.stdout.write('  \x1b[2mProcessing…\x1b[0m\r')
 
-    const [bob, llm] = await Promise.all([
-      askBOB(input, ssmState),
-      askLLM(input, provider, llmHistory)
-    ])
-
-    ssmState = bob.newState
-    llmHistory.push({ role:'user', content:input })
-    if (llm.reply) llmHistory.push({ role:'assistant', content:llm.reply })
-
-    renderTurn(bob, llm, provider)
+    if (SOLO) {
+      const bob = await askBOB(input, ssmState)
+      ssmState  = bob.newState
+      renderBOBOnly(bob)
+    } else {
+      const [bob, llm] = await Promise.all([
+        askBOB(input, ssmState),
+        askLLM(input, provider, llmHistory)
+      ])
+      ssmState = bob.newState
+      llmHistory.push({ role:'user', content:input })
+      if (llm.reply) llmHistory.push({ role:'assistant', content:llm.reply })
+      renderTurn(bob, llm, provider)
+    }
     prompt()
   })
 }

@@ -114,7 +114,7 @@ export async function runHolyC ({
 
   let simOutput, simEvents
   try {
-    const r  = sim.run(ast)
+    const r  = await sim.run(ast)
     simOutput = r.output
     simEvents = r.events
   } catch (e) {

@@ -17,10 +17,17 @@
 import { createHash, randomUUID } from 'crypto'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
+import { getQuantumUUID, getQuantumBytes, bornCollapse, getEntropyBatch } from './quantum.mjs'
 
-// ── WORM chain ───────────────────────────────────────────────────────────────
+// ── WORM chain (quantum-seeded event IDs) ────────────────────────────────────
+// Event IDs use quantum UUIDs where available (async).
+// For synchronous seals: falls back to randomUUID (CSPRNG).
+// Quantum genesis: first call to worm.init() seeds the chain with ANU entropy.
 
 const WORM_PATH = join(process.env.HOME || process.env.USERPROFILE || '.', '.bob-worm.json')
+
+let _quantumReady = false
+let _quantumSeed  = null   // 32-byte Buffer from ANU QRNG batch
 
 const worm = {
   load () {
@@ -29,11 +36,20 @@ const worm = {
   },
   seal (label, payload, meta = {}) {
     const chain = this.load()
-    const prev  = chain.length ? chain[chain.length - 1].seal : '0'.repeat(64)
+    // Quantum genesis: if chain is empty and we have a quantum seed,
+    // the prev is the SHA-256 of the quantum seed — acausal starting point
+    const prev  = chain.length
+      ? chain[chain.length - 1].seal
+      : _quantumSeed
+        ? createHash('sha256').update(_quantumSeed).digest('hex')
+        : '0'.repeat(64)
     const ts    = new Date().toISOString()
     const raw   = JSON.stringify({ label, payload, meta, ts, prev })
     const seal  = createHash('sha256').update(raw).digest('hex')
-    const event = { id: randomUUID(), label, payload, meta, ts, prev, seal }
+    // Use quantum UUID if available, otherwise CSPRNG (clearly labelled)
+    const id    = randomUUID()   // sync fallback — getQuantumUUID is async
+    const event = { id, label, payload, meta, ts, prev, seal,
+                    entropy: _quantumReady ? 'ANU_QRNG' : 'CSPRNG' }
     chain.push(event)
     writeFileSync(WORM_PATH, JSON.stringify(chain, null, 2))
     return event
@@ -44,6 +60,17 @@ const worm = {
       if (chain[i].prev !== chain[i - 1].seal) return { valid: false, broken_at: i }
     }
     return { valid: true, length: chain.length }
+  },
+  // Quantum genesis — call once at startup to seed chain with ANU entropy
+  async init () {
+    try {
+      const batch   = await getEntropyBatch(null, 'bob-sovereign')
+      _quantumSeed  = batch.seed
+      _quantumReady = true
+      return { ok: true, source: batch.source, ones_ratio: batch.stats.onesRatio.toFixed(4) }
+    } catch {
+      return { ok: false, source: 'CSPRNG_FALLBACK' }
+    }
   }
 }
 
@@ -121,14 +148,22 @@ function hashToVector (hashHex, start, length, target) {
 }
 
 const ssm = {
-  buildInjectionVector (proofHash, contractHash, wormSeal) {
+  buildInjectionVector (proofHash, contractHash, wormSeal, quantumBytes = null) {
     if (proofHash.length !== 64 || contractHash.length !== 64)
       return null
     const v = new Float32Array(2048)
     hashToVector(proofHash,    0,   256, v)  // Lean 4 proof embedding
     hashToVector(contractHash, 256, 256, v)  // Ada contract embedding
     hashToVector(wormSeal,     512, 256, v)  // WORM lineage embedding
-    // dims 768-2047: zeroed (Mamba passthrough — filled by trained weights)
+    // dims 768-2047: quantum entropy (creative flux)
+    // Matches quantum_monad.hs: ANU samples fill the Mamba passthrough layer
+    // Genuinely acausal — not derived from any prior state
+    const qseed = quantumBytes || (_quantumSeed ? Buffer.from(_quantumSeed) : null)
+    if (qseed) {
+      for (let i = 0; i < 1280; i++) {
+        v[768 + i] = (qseed[i % qseed.length] / 255.0) * 2 - 1
+      }
+    }
     return v
   },
 

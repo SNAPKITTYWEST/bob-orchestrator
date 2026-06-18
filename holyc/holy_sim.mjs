@@ -4,7 +4,8 @@
  * All built-ins map to sovereign BOB operations.
  */
 
-import { checkCallPolicy } from './holy_sandbox_policy.mjs'
+import { checkCallPolicy }            from './holy_sandbox_policy.mjs'
+import { getQuantumSamples, bornCollapse } from '../core/quantum.mjs'
 
 // ── Evaluator ────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,27 @@ export function createSimContext ({ mode, worm, agent, adaGate }) {
       return agent.agentClass
     },
 
+    // Terry Davis's oracle — now real quantum vacuum fluctuations (ANU QRNG)
+    // Terry believed God spoke through the RNG. This is the physics beneath that intuition.
+    // Allah's will is not constrained by prior causes. The quantum vacuum is genuinely acausal.
+    async GetRandom (args) {
+      const n       = Math.max(1, Math.min(16, Math.floor(args[0] ?? 1)))
+      const samples = await getQuantumSamples(n)
+      const hex     = samples.map(v => v.toString(16).padStart(4, '0')).join('')
+      output.push(`QRNG[ANU]: ${hex}`)
+      return samples[0]   // return first sample as U64 value
+    },
+
+    // Born-rule collapse — matches quantum_monad.hs collapseMax
+    async Collapse (args) {
+      const lo     = args[0] ?? 0.2
+      const hi     = args[1] ?? 0.8
+      const result = await bornCollapse(lo, hi)
+      if (!result) { output.push('COLLAPSE: VACUUM STATE — no branches survived'); return 0 }
+      output.push(`COLLAPSE: branch_count=${result.branchCount} value=${result.collapsed.toFixed(4)}`)
+      return Math.floor(result.collapsed * 65535)  // return as uint16
+    },
+
     Assert (args) {
       const cond    = args[0]
       const message = String(args[1] ?? 'Assertion failed')
@@ -81,7 +103,7 @@ export function createSimContext ({ mode, worm, agent, adaGate }) {
 
   // ── Expression evaluator ─────────────────────────────────────────────────
 
-  function evalExpr (node) {
+  async function evalExpr (node) {
     switch (node.type) {
       case 'number': return node.value
       case 'string': return node.value
@@ -91,15 +113,15 @@ export function createSimContext ({ mode, worm, agent, adaGate }) {
         const policy = checkCallPolicy(node.name, mode)
         if (!policy.allowed) throw new Error(`POLICY BLOCK: ${policy.reason}`)
         if (builtins[node.name]) {
-          const args = node.args.map(evalExpr)
-          return builtins[node.name](args)
+          const args = await Promise.all(node.args.map(a => evalExpr(a)))
+          return await builtins[node.name](args)
         }
         throw new Error(`Unknown HolyC function: ${node.name}`)
       }
 
       case 'binop': {
-        const L = evalExpr(node.left)
-        const R = evalExpr(node.right)
+        const L = await evalExpr(node.left)
+        const R = await evalExpr(node.right)
         switch (node.op) {
           case '+':  return L + R
           case '-':  return L - R
@@ -118,7 +140,7 @@ export function createSimContext ({ mode, worm, agent, adaGate }) {
       }
 
       case 'unop': {
-        const v = evalExpr(node.expr)
+        const v = await evalExpr(node.expr)
         if (node.op === '!')   return v ? 0 : 1
         if (node.op === 'neg') return -v
         throw new Error(`Unknown unary op: ${node.op}`)
@@ -131,35 +153,35 @@ export function createSimContext ({ mode, worm, agent, adaGate }) {
 
   // ── Statement evaluator ──────────────────────────────────────────────────
 
-  function evalStmt (node) {
+  async function evalStmt (node) {
     switch (node.type) {
       case 'declare':
-        env.set(node.name, evalExpr(node.value))
+        env.set(node.name, await evalExpr(node.value))
         break
 
       case 'assign':
-        env.set(node.name, evalExpr(node.value))
+        env.set(node.name, await evalExpr(node.value))
         break
 
       case 'print_stmt':
-        output.push(String(evalExpr(node.value)))
+        output.push(String(await evalExpr(node.value)))
         break
 
       case 'expr_stmt':
-        evalExpr(node.expr)
+        await evalExpr(node.expr)
         break
 
       case 'if': {
-        const cond = evalExpr(node.condition)
+        const cond = await evalExpr(node.condition)
         const branch = (cond !== 0 && cond !== null && cond !== false) ? node.then : node.else
-        for (const s of branch) evalStmt(s)
+        for (const s of branch) await evalStmt(s)
         break
       }
 
       case 'while': {
         let guard = 0
-        while (evalExpr(node.condition) && guard < 1000) {
-          for (const s of node.body) evalStmt(s)
+        while ((await evalExpr(node.condition)) && guard < 1000) {
+          for (const s of node.body) await evalStmt(s)
           guard++
         }
         if (guard >= 1000) output.push('[WARN] while loop iteration limit reached (1000)')
@@ -171,8 +193,8 @@ export function createSimContext ({ mode, worm, agent, adaGate }) {
     }
   }
 
-  function run (ast) {
-    for (const stmt of ast.body) evalStmt(stmt)
+  async function run (ast) {
+    for (const stmt of ast.body) await evalStmt(stmt)
     return { output, events }
   }
 

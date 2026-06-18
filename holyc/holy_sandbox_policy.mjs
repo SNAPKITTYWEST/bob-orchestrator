@@ -38,6 +38,8 @@ const SIM_ALLOWLIST = new Set([
   'GetTrust',
   'GetClass',
   'Assert',
+  'GetRandom',   // ANU QRNG oracle — the Terry Davis oracle, real quantum bytes
+  'Collapse',    // Born-rule collapse — quantum_monad.hs semantics
 ])
 
 // Commands that additionally require QEMU_SANDBOX

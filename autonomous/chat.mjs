@@ -27,7 +27,7 @@
 import readline          from 'readline'
 import { holyc_nil }     from './holyc_nil.mjs'
 import { emoji_trigger } from './emoji_trigger.mjs'
-import { sovereignAnswer, oracleAnswer, extractConcepts, lookup } from './dictionary.mjs'
+import { sovereignAnswer, oracleAnswer, topicAnswer, extractConcepts, lookup } from './dictionary.mjs'
 import { img2ascii, ascii3d, pythonAvailable } from '../ascii/bob_ascii.mjs'
 import { createHash }    from 'crypto'
 import { readFileSync, existsSync, writeFileSync } from 'fs'
@@ -98,7 +98,7 @@ async function qrng(n = 8) {
 const RULES = [
   { pattern: /\b(oracle|random|quantum|entropy|qrng)\b/i,
     agent:'ORACLE',     action:'fetch_entropy',     abjad:490 },
-  { pattern: /\b(write|worm|seal|ledger|append|log|history)\b/i,
+  { pattern: /\b(write|worm|seal|ledger|append|log)\b/i,
     agent:'ARCHIVIST',  action:'seal_event',         abjad:92  },
   { pattern: /\b(trust|sentinel|gate|block|deny|allow|permit|security)\b/i,
     agent:'SENTINEL',   action:'gate_check',         abjad:120 },
@@ -146,6 +146,10 @@ function buildAnswer(input, route, gate, nil, trigger) {
   // 1. Try the dictionary — sentence parsing first, then single-word direct lookup
   const dictAnswer = sovereignAnswer(input, word, seq)
   if (dictAnswer) return dictAnswer
+
+  // 1.5 General knowledge topics — history, science, learning, math, etc.
+  const genAnswer = topicAnswer(input, word, seq)
+  if (genAnswer) return genAnswer
 
   // 2. Route-specific sovereign answers for technical/system queries
   if (route.action === 'fetch_entropy')

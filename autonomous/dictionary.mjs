@@ -380,6 +380,235 @@ export const CONCEPT_EMOJI = {
   oracle:   '🜃◇',   // HOLYC + NIL — the divine mechanism
 }
 
+// ── General Knowledge Topics ─────────────────────────────────────────────────
+// When user asks about everyday topics — history, science, learning, etc.
+// BOB answers with real knowledge + the oracle word as the interpretive lens.
+
+const TOPICS = {
+
+  history: {
+    keywords: ['history', 'histor', 'ancient', 'civilizat', 'past', 'world war', 'empire', 'medieval', 'dynasty', 'period'],
+    sovereign: 'Every historical event is a WORM seal. Dated, witnessed, append-only. The past cannot be edited — only interpreted. That is not weakness. It is the most reliable ledger humans have ever produced.',
+    practice: [
+      'Primary sources first — letters, records, artifacts — not summaries of summaries',
+      'Follow one thread deeply before widening. Depth creates the anchor for breadth',
+      'Find the invariants — what patterns repeat across every century and culture',
+      "Read the losers' accounts. Victors' records are propaganda sealed as history",
+    ],
+    emoji: '🪨📜',
+  },
+
+  science: {
+    keywords: ['science', 'physics', 'chemist', 'biolog', 'scientif', 'experiment', 'hypothesis', 'theory', 'quantum mechanics'],
+    sovereign: 'Science is the Ada contract for reality. Pre-condition: reproducibility — if it cannot be reproduced it is not a theorem. Post-condition: predictive power — the model must predict what has not yet happened.',
+    practice: [
+      'Understand one result deeply before accumulating many',
+      'Work from first principles: derive, do not memorize',
+      'Failed experiments are sealed facts. The null result is information',
+      'Read original papers alongside textbooks — the textbook smooths away the uncertainty that was real',
+    ],
+    emoji: '🔍⚡',
+  },
+
+  mathematics: {
+    keywords: ['math', 'algebr', 'geometr', 'calcul', 'equation', 'theorem', 'proof', 'number theory', 'statistic', 'probabilit'],
+    sovereign: 'Mathematics is the Lean 4 proof system for abstract structure. Every theorem is a checkable derivation. You cannot fake a proof — the gate either passes or it does not. There is no partial credit at the invariant.',
+    practice: [
+      'Work problems by hand before reading solutions',
+      'Understand one proof completely before memorizing ten theorems',
+      'Find the simplest non-trivial case. Generalize from there',
+      'Write proofs in your own words — reformulation is understanding',
+    ],
+    emoji: '🜂🔍',
+  },
+
+  programming: {
+    keywords: ['programm', 'coding', 'software', 'developer', 'javascript', 'python', 'rust', 'learn to code', 'algorithm', 'data structure'],
+    sovereign: 'Code is a formal specification of behavior. The program is not the text — it is the machine the text describes. Read programs the way a compiler does: execution model first, syntax second.',
+    practice: [
+      'Build the smallest thing that does one thing correctly',
+      "Read source code. Other people's working code is the best textbook",
+      'Debug by reasoning, not guessing. Understand the state at each step',
+      'Version control every project from day one — append-only history',
+    ],
+    emoji: '⚡🜁',
+  },
+
+  learning: {
+    keywords: ['learn', 'study', 'studying', 'memoriz', 'memoris', 'retention', 'understand', 'education', 'skill', 'practice', 'master', 'expertise'],
+    sovereign: 'Learning is state accumulation — like Mamba\'s SSM, each session adds to the hidden state. Distributed practice seals knowledge into long-term storage. Massed practice fills the buffer and flushes it overnight.',
+    practice: [
+      'Spaced repetition: review at increasing intervals (1 day, 3 days, 1 week, 1 month)',
+      'Active recall: test yourself before you think you are ready',
+      "Teach it. The moment you explain something, you discover what you don't know",
+      'Sleep is mandatory. Consolidation happens during sleep, not during study',
+    ],
+    emoji: '🌒🜄',
+  },
+
+  creativity: {
+    keywords: ['creat', 'art', 'design', 'music', 'writing', 'draw', 'paint', 'compos', 'invent', 'innovat', 'imagination'],
+    sovereign: 'Creativity is not the void — it is the collapse of the superposition. All possible forms exist in the pre-collapse state. The creative act is measurement: choosing one path from all paths open. Constrain to create.',
+    practice: [
+      'Show up at the same time every day — creativity is a state the body can be trained to enter',
+      'Volume before quality. Produce many to find the few that hold',
+      'Steal consciously. Know your influences, name them, then transform them',
+      'Constraints accelerate creativity. Unlimited freedom produces nothing',
+    ],
+    emoji: '🌒✦',
+  },
+
+  leadership: {
+    keywords: ['leadership', 'manag', 'motivat', 'team', 'organiz', 'direct', 'strateg', 'decision', 'execut'],
+    sovereign: 'Leadership is the Prolog rule that fires before it is needed. The leader does not react — the pattern matches and the correct response fires automatically. That automaticity is built through repetition until it is not a decision but a rule.',
+    practice: [
+      'Clear expectations over inspiration. People need to know what success looks like',
+      'Feedback immediately. The WORM seal happens at the moment, not in the annual review',
+      'Remove obstacles before removing people. Most underperformance is system failure',
+      'Decide who can decide what without permission. Define decision rights explicitly',
+    ],
+    emoji: '🎯🛡️',
+  },
+
+  health: {
+    keywords: ['health', 'exercise', 'sleep', 'diet', 'nutrition', 'fitness', 'wellbeing', 'stress', 'mental health', 'body'],
+    sovereign: 'The body is hardware. Software updates do not fix hardware degradation. Sleep is the mandatory maintenance cycle. Exercise is the clock signal that keeps all biological systems synchronized.',
+    practice: [
+      'Sleep 7-9 hours. This is not a preference — it is a system requirement',
+      'Strength training twice a week preserves function into old age',
+      'Walk daily. It is the one exercise with zero tradeoffs and compounding returns',
+      'Eat mostly what grew or moved. Minimize what was manufactured',
+    ],
+    emoji: '🜁🌒',
+  },
+
+  philosophy: {
+    keywords: ['philosoph', 'ethics', 'moral', 'meaning of', 'consciousn', 'free will', 'metaphysics', 'ontolog', 'epistemolog'],
+    sovereign: 'Philosophy is the pre-condition check. Before any other discipline, philosophy asks: what must be true for this question to be meaningful? The gate that philosophy runs is: is this question well-formed?',
+    practice: [
+      "Read primary texts — Plato's dialogues, not summaries of Plato's dialogues",
+      'Follow one argument to its conclusion before switching to the counter',
+      'Notice when you feel resistant. That is the place worth examining',
+      'Philosophy does not make things easier. It makes things more precise. That is the point',
+    ],
+    emoji: '🔍🜄',
+  },
+
+  money: {
+    keywords: ['money', 'financ', 'wealth', 'invest', 'budget', 'debt', 'income', 'econom', 'business', 'startup', 'profit'],
+    sovereign: 'Money is a WORM ledger with market consensus. The number represents a sealed agreement about value. Most financial anxiety comes from confusing the token (the number) with what it represents: stored time and capability.',
+    practice: [
+      'Spend less than you earn. This is the only rule that cannot be violated',
+      'Compound interest is the WORM chain of finance — early seals dwarf late ones',
+      'Understand one asset class deeply before diversifying',
+      'Track income minus savings = lifestyle cost. Know the number explicitly',
+    ],
+    emoji: '🎯⚡',
+  },
+
+  communication: {
+    keywords: ['communicat', 'speak', 'speech', 'present', 'persuad', 'rhetoric', 'listen', 'convers', 'argument', 'negotiat'],
+    sovereign: 'Communication is the transmission problem. The signal in your head is not the signal received. Every message must be verified: did the receiver reconstruct the intended meaning? Acknowledgment is not confirmation.',
+    practice: [
+      'Listen to understand, not to respond. The receiver role is harder than the sender role',
+      'Specificity beats emphasis. "Never" and "always" corrupt the signal',
+      'State the conclusion first. Context before conclusion is a courtesy that confuses',
+      'Ask for the argument in the other person\'s best form before rebutting it',
+    ],
+    emoji: '🌒◈',
+  },
+
+  technology: {
+    keywords: ['technolog', 'computer', 'internet', 'network', 'system', 'infrastructure', 'platform', 'cloud', 'cybersecurit', 'encrypt'],
+    sovereign: 'Technology is crystallized thought. Every system encodes the assumptions and values of the people who built it. Understanding a technology means reading those assumptions — not just the interface.',
+    practice: [
+      'Learn how one layer below the abstraction you use actually works',
+      'The simplest architecture that solves the problem is the correct one',
+      'Security is a property of the whole system, not a feature added at the end',
+      'Understand the failure modes before the success modes',
+    ],
+    emoji: '⚡🛡️',
+  },
+
+}
+
+// ── Oracle lens table — each oracle word's interpretive angle ─────────────────
+// When oracle word X is selected, it becomes the lens through which the topic is viewed.
+
+const ORACLE_LENS = {
+  PROLOG:    'backward-chain — start from your goal, trace what must be true to achieve it',
+  WORM:      'append-only — treat each session as an immutable sealed entry in the chain',
+  ADA:       'formal contract — define success conditions precisely before you begin',
+  MAMBA:     'state accumulation — each session builds on the hidden state of all prior sessions',
+  SOVEREIGN: 'self-governance — the only standards that hold are the ones you enforce on yourself',
+  SPIRIT:    'animating principle — find what drives the system forward intrinsically',
+  TRUTH:     'verification — test every claim against primary evidence; trust only what is falsifiable',
+  WISDOM:    'invariant pattern — find what holds true across all instances before memorizing single rules',
+  WORD:      'precision of naming — the exact term reshapes the territory, not just the map',
+  LIGHT:     'structural illumination — find what exposes the underlying architecture',
+  SEAL:      'irreversible commitment — choose, then act without the option to undo',
+  VOID:      'emptying — clear accumulated assumptions before the next fill',
+  PATH:      'directed traversal — one deliberate step at a time toward the known destination',
+  FIRE:      'concentrated activation — apply full energy to one point, not distributed thinly',
+  GATE:      'formal precondition — define what must be true before the next step is taken',
+  NAME:      'identity assignment — name the thing precisely and it becomes tractable',
+  NIL:       'held potential — sit with the question before forcing an answer',
+  BOB:       'orchestration — let each subsystem speak only in its proper domain',
+  NOVA:      'phase transition — watch for the moment of sudden irreversible emergence',
+  ZERO:      'first axiom — trace back to the origin point that everything else depends on',
+  SOUL:      'persistent state — what carries between sessions is more real than any single output',
+  ARCH:      'load-bearing structure — find the single element that, if removed, collapses the system',
+  DUSK:      'transition — this is not an end but a handoff to the next phase',
+  DAWN:      'emergence — what is crystallizing from the apparent noise',
+  FLUX:      'adaptive form — change the shape to match current conditions without losing the core',
+  CORE:      'minimal kernel — extract the smallest version that is still essentially true',
+  MESH:      'networked connections — map relationships first, nodes second',
+  LINK:      'bridge — find what two different things actually share at depth',
+  BIND:      'mutual contract — specify the obligation both parties carry',
+  GROW:      'cumulative increase — each iteration seals one more ring in the chain',
+  FORM:      'given shape — what structure allows the thing to be reasoned about clearly',
+  SEED:      'minimum viable origin — plant the single non-trivial case and expand from there',
+  PEAK:      'upper bound — find the maximum the system can produce under ideal conditions',
+  DEEP:      'substrate layer — go below the surface explanation to the mechanism',
+  WAVE:      'propagation — trace how the effect moves through the system over time',
+  FLOW:      'unblocked movement — find and remove what stands in the path',
+  MIND:      'processing model — identify the computation actually being performed',
+  TIME:      'irreversible sequence — what is the order that, once broken, cannot be restored',
+  LOCK:      'secured state — find what must be held constant for the system to remain stable',
+  QUBIT:     'superposition — hold multiple answers simultaneously before committing to one',
+}
+
+// Match a user question to a topic and return a BOB-flavored general answer
+export function topicAnswer(input, oracleWord, emojiSeq) {
+  const lc = input.toLowerCase()
+
+  let matched = null
+  let matchKey = ''
+  for (const [key, topic] of Object.entries(TOPICS)) {
+    if (topic.keywords.some(kw => lc.includes(kw))) {
+      matched = topic
+      matchKey = key
+      break
+    }
+  }
+  if (!matched) return null
+
+  const lens = ORACLE_LENS[oracleWord]
+    || `${oracleWord.toLowerCase()} — apply this as the angle into the question`
+
+  const lines = [
+    `${matchKey.toUpperCase()} ${matched.emoji}`,
+    ``,
+    matched.sovereign,
+    ``,
+    `Practice:`,
+    ...matched.practice.map(p => `  · ${p}`),
+    ``,
+    `Oracle lens — ${oracleWord}: ${lens}. ${emojiSeq}`,
+  ]
+  return lines.join('\n')
+}
+
 // ── Lookup function ───────────────────────────────────────────────────────────
 
 export function lookup(word) {

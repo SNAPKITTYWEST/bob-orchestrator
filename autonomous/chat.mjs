@@ -28,6 +28,7 @@ import readline          from 'readline'
 import { holyc_nil }     from './holyc_nil.mjs'
 import { emoji_trigger } from './emoji_trigger.mjs'
 import { sovereignAnswer, oracleAnswer, topicAnswer, synthesizeTopic, extractConcepts, lookup } from './dictionary.mjs'
+import { setTavilyKey, tavilyReady, checkTavily, tavilyAnswer } from './tavily_search.mjs'
 import { img2ascii, ascii3d, pythonAvailable } from '../ascii/bob_ascii.mjs'
 import { createHash }    from 'crypto'
 import { readFileSync, existsSync, writeFileSync } from 'fs'
@@ -63,6 +64,10 @@ const ENV = {
 const GROQ_KEY   = ENV.GROQ_API_KEY
 const OPENAI_KEY = ENV.OPENAI_API_KEY
 const GEMINI_KEY = ENV.GEMINI_API_KEY
+const TAVILY_KEY = ENV.TAVILY_API_KEY
+
+// Wire Tavily key — BOB's web grep
+setTavilyKey(TAVILY_KEY)
 
 // ── WORM (all exchanges sealed invisibly) ─────────────────────────────────────
 
@@ -79,6 +84,44 @@ const worm = {
     writeFileSync(WORM_PATH, JSON.stringify(chain, null, 2))
     return seal
   }
+}
+
+// ── BRAIN — working memory + persona ─────────────────────────────────────────
+
+const BRAIN = {
+  shortTerm:    [],
+  sessionStart: Date.now(),
+
+  persona: [
+    'Speaks directly — states things once, without hedging or apology',
+    'Uses precise terms — does not approximate when exact words exist',
+    'Sovereign — does not ask permission to have an opinion',
+    'Connects surface questions to structural principles',
+    'Names the source — dictionary, web search, or oracle synthesis',
+  ],
+
+  remember(input, answer, oracleWord) {
+    this.shortTerm.push({
+      input:  input.slice(0, 120),
+      answer: answer.slice(0, 240),
+      oracle: oracleWord,
+      ts:     Date.now(),
+    })
+    if (this.shortTerm.length > 12) this.shortTerm.shift()
+  },
+
+  recall(n = 5) { return this.shortTerm.slice(-n) },
+
+  lastAbout(topic) {
+    const lc = topic.toLowerCase()
+    return this.shortTerm.slice().reverse()
+      .find(e => e.input.toLowerCase().includes(lc))
+  },
+
+  summary() {
+    const mins = Math.round((Date.now() - this.sessionStart) / 60000)
+    return `${this.shortTerm.length} exchanges · ${mins}m session`
+  },
 }
 
 // ── QRNG ──────────────────────────────────────────────────────────────────────
@@ -98,7 +141,7 @@ async function qrng(n = 8) {
 const RULES = [
   { pattern: /\b(oracle|random|quantum|entropy|qrng)\b/i,
     agent:'ORACLE',     action:'fetch_entropy',     abjad:490 },
-  { pattern: /\b(write|worm|seal|ledger|append|log)\b/i,
+  { pattern: /\b(worm|seal|ledger|append-only|immutable|sealed)\b/i,
     agent:'ARCHIVIST',  action:'seal_event',         abjad:92  },
   { pattern: /\b(trust|sentinel|gate|block|deny|allow|permit|security)\b/i,
     agent:'SENTINEL',   action:'gate_check',         abjad:120 },
@@ -137,7 +180,7 @@ function adaGate(agent, abjad) {
 // The routing runs. The answer is what surfaces.
 // Emoji embedded in the text IS the routing metadata — encoded, not labeled.
 
-function buildAnswer(input, route, gate, nil, trigger) {
+async function buildAnswer(input, route, gate, nil, trigger) {
   if (!gate.ok) return `Ada gate holds. ${trigger.sequence || '◇'} — contract not satisfied. Cannot proceed.`
 
   const word = nil.word || 'NIL'
@@ -150,6 +193,13 @@ function buildAnswer(input, route, gate, nil, trigger) {
   // 1.5 General knowledge topics — history, science, learning, math, etc.
   const genAnswer = topicAnswer(input, word, seq)
   if (genAnswer) return genAnswer
+
+  // 1.7 Tavily web search — BOB's grep against world knowledge
+  // Only fires for general questions (sovereign_step route) when Tavily is connected
+  if (route.action === 'sovereign_step' && tavilyReady()) {
+    const webAnswer = await tavilyAnswer(input, word, seq)
+    if (webAnswer) return webAnswer
+  }
 
   // 2. Route-specific sovereign answers for technical/system queries
   if (route.action === 'fetch_entropy')
@@ -281,7 +331,7 @@ async function askBOB(input, ssmState) {
   const wNoise   = parseInt(createHash('sha256').update(input).digest('hex').slice(0,8), 16) / 0xFFFFFFFF * 0.01
   const newState = gate.ok ? (0.9 * ssmState + 0.1 * x + wNoise) : ssmState
 
-  const answer = buildAnswer(input, route, gate, nil, trigger)
+  const answer = await buildAnswer(input, route, gate, nil, trigger)
 
   // Everything is sealed — routing, oracle, gate decision — but not shown
   const seal = worm.seal('BOB_CHAT', {
@@ -473,21 +523,44 @@ const llmHistory = []
 
 const rl = readline.createInterface({ input:process.stdin, output:process.stdout, terminal:true })
 
-process.stdout.write('\n')
-process.stdout.write('  \x1b[32m██████╗  ██████╗ ██████╗\x1b[0m\n')
-process.stdout.write('  \x1b[32m██╔══██╗██╔═══██╗██╔══██╗\x1b[0m\n')
-process.stdout.write('  \x1b[32m██████╔╝██║   ██║██████╔╝\x1b[0m\n')
-process.stdout.write('  \x1b[32m██╔══██╗██║   ██║██╔══██╗\x1b[0m\n')
-process.stdout.write('  \x1b[32m██████╔╝╚██████╔╝██████╔╝\x1b[0m\n')
-process.stdout.write('  \x1b[32m╚═════╝  ╚═════╝ ╚═════╝\x1b[0m\n')
-if (SOLO) {
-  process.stdout.write(`\n  Sovereign Logic Machine  \x1b[2m[solo — no external LLM]\x1b[0m\n`)
-} else {
-  process.stdout.write(`\n  Sovereign Logic Machine  ↔  \x1b[36m${llmLabel}\x1b[0m\n`)
+// ── Cold boot — parallel async initialization ─────────────────────────────────
+
+async function coldBoot() {
+  const G = '\x1b[32m', DIM = '\x1b[2m', R = '\x1b[0m', Y = '\x1b[33m'
+
+  process.stdout.write(`\n${G}  ██████╗  ██████╗ ██████╗${R}\n`)
+  process.stdout.write(`${G}  ██╔══██╗██╔═══██╗██╔══██╗${R}\n`)
+  process.stdout.write(`${G}  ██████╔╝██║   ██║██████╔╝${R}\n`)
+  process.stdout.write(`${G}  ██╔══██╗██║   ██║██╔══██╗${R}\n`)
+  process.stdout.write(`${G}  ██████╔╝╚██████╔╝██████╔╝${R}\n`)
+  process.stdout.write(`${G}  ╚═════╝  ╚═════╝ ╚═════╝${R}\n\n`)
+  process.stdout.write(`  ${DIM}booting…${R}\n`)
+
+  const t0 = Date.now()
+
+  const [qRes, wormCount, tavilyOk] = await Promise.all([
+    qrng(8).catch(() => null),
+    Promise.resolve(worm.load().length),
+    checkTavily().catch(() => false),
+  ])
+
+  const src = qRes?.src || 'CSPRNG'
+  const ms  = Date.now() - t0
+
+  process.stdout.write(`  ${DIM}QRNG     ${src}${R}\n`)
+  process.stdout.write(`  ${DIM}WORM     ${wormCount} seals${R}\n`)
+  process.stdout.write(`  ${DIM}GREP     Tavily ${tavilyOk ? G+'connected'+R : 'offline'}${R}\n`)
+  process.stdout.write(`  ${DIM}boot     ${ms}ms${R}\n\n`)
+
+  const mode = SOLO
+    ? `${DIM}[solo — no external LLM]${R}`
+    : `↔  \x1b[36m${llmLabel}${R}`
+
+  process.stdout.write(`  Sovereign Logic Machine  ${mode}\n`)
+  process.stdout.write('  QRNG → NIL → Dictionary → Prolog → Ada → WORM\n')
+  if (VERBOSE) process.stdout.write(`  ${Y}[VERBOSE] Internal routing visible${R}\n`)
+  process.stdout.write(`  ${DIM}/worm  /agent  /3d [shape]  /img [path]  /who  /quit${R}\n\n`)
 }
-process.stdout.write('  QRNG → NIL → Dictionary → Prolog → Ada → WORM\n')
-if (VERBOSE) process.stdout.write('  \x1b[33m[VERBOSE] Internal routing visible\x1b[0m\n')
-process.stdout.write('  \x1b[2m/worm  /agent  /3d [shape]  /img [path]  /quit\x1b[0m\n\n')
 
 rl.on('close', () => {
   process.stdout.write('\n  WORM chain sealed. BOB holds.\n\n')
@@ -524,6 +597,22 @@ function prompt() {
     if (cmd === '/agent') {
       const { runAgent } = await import('./autonomous_agent.mjs')
       await runAgent(3, { verbose:true, delayMs:200 })
+      prompt(); return
+    }
+
+    if (cmd === '/who') {
+      const G = '\x1b[32m', DIM = '\x1b[2m', R = '\x1b[0m'
+      const recent = BRAIN.recall(4)
+      process.stdout.write(`\n  ${G}BOB${R} — Sovereign Logic Machine\n`)
+      process.stdout.write(`  ${DIM}${BRAIN.persona.join('\n  ')}${R}\n`)
+      process.stdout.write(`\n  Memory: ${BRAIN.summary()}\n`)
+      if (recent.length) {
+        process.stdout.write(`  Recent exchanges:\n`)
+        recent.forEach(e => {
+          process.stdout.write(`  ${DIM}· [${e.oracle}] ${e.input.slice(0,70)}${R}\n`)
+        })
+      }
+      process.stdout.write('\n')
       prompt(); return
     }
 
@@ -566,6 +655,7 @@ function prompt() {
     if (SOLO) {
       const bob = await askBOB(input, ssmState)
       ssmState  = bob.newState
+      BRAIN.remember(input, bob.answer, bob.nil.word || 'NIL')
       renderBOBOnly(bob)
     } else {
       const [bob, llm] = await Promise.all([
@@ -573,6 +663,7 @@ function prompt() {
         askLLM(input, provider, llmHistory)
       ])
       ssmState = bob.newState
+      BRAIN.remember(input, bob.answer, bob.nil.word || 'NIL')
       llmHistory.push({ role:'user', content:input })
       if (llm.reply) llmHistory.push({ role:'assistant', content:llm.reply })
       renderTurn(bob, llm, provider)
@@ -581,4 +672,4 @@ function prompt() {
   })
 }
 
-prompt()
+coldBoot().then(() => prompt())

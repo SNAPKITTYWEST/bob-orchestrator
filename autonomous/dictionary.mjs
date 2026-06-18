@@ -583,7 +583,7 @@ const TOPICS = {
 // ── Oracle lens table — each oracle word's interpretive angle ─────────────────
 // When oracle word X is selected, it becomes the lens through which the topic is viewed.
 
-const ORACLE_LENS = {
+export const ORACLE_LENS = {
   PROLOG:    'backward-chain — start from your goal, trace what must be true to achieve it',
   WORM:      'append-only — treat each session as an immutable sealed entry in the chain',
   ADA:       'formal contract — define success conditions precisely before you begin',

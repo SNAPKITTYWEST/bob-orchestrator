@@ -392,22 +392,36 @@ function renderBOBOnly(bob) {
 const stripAnsi = s => s.replace(/\x1b\[[0-9;]*m/g, '')
 
 function wrapText(text, prefix, maxWidth) {
-  const prefixLen = stripAnsi(prefix).length   // actual visible width of the prefix
+  const prefixLen = stripAnsi(prefix).length
   const lines = text.split('\n')
   const out = []
   for (const rawLine of lines) {
     if (rawLine === '') { out.push(prefix); continue }
-    const words = rawLine.split(' ')
-    let line = prefix
+
+    // Separate leading whitespace from content so we can re-apply it on wrapped lines
+    const m = rawLine.match(/^(\s*)(.*)$/)
+    const indent  = m[1]
+    const content = m[2]
+    // Bullet continuation hangs 2 extra chars to align text under the bullet
+    const extra      = content.startsWith('· ') ? '  ' : ''
+    const firstPfx   = prefix + indent
+    const contPfx    = prefix + indent + extra
+
+    const words = content.split(' ')
+    let cur   = firstPfx
+    let fresh = true   // true = start of a (possibly wrapped) line segment
+
     for (const w of words) {
-      if (stripAnsi(line + w).length > maxWidth) {
-        out.push(line)
-        line = prefix
+      if (w === '') { if (!fresh) cur += ' '; continue }
+      if (!fresh && stripAnsi(cur + w).length > maxWidth) {
+        out.push(cur.trimEnd())
+        cur   = contPfx
+        fresh = true
       }
-      line += w + ' '
+      cur  += w + ' '
+      fresh = false
     }
-    // push remaining content only if it has visible chars beyond the prefix
-    if (stripAnsi(line).length > prefixLen) out.push(line)
+    if (stripAnsi(cur).trimEnd().length > prefixLen) out.push(cur.trimEnd())
   }
   return out.join('\n')
 }

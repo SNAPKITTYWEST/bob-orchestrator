@@ -57,11 +57,17 @@ const corruptionNode = document.getElementById('corruption')
 const artNode = document.getElementById('art')
 const compiledNode = document.getElementById('compiled')
 const traceNode = document.getElementById('trace')
+const esolangSourceNode = document.getElementById('esolang-source')
+const cipherOutputNode = document.getElementById('cipher-output')
+const glowSealNode = document.getElementById('glow-seal')
 let cleanHash = ''
 let currentManifest = null
+let currentEsolang = 'brainfuck'
+let currentForge = null
 
 source.value = examples.full
 render()
+forge()
 
 document.querySelectorAll('[data-load]').forEach((button) => {
   button.addEventListener('click', () => {
@@ -76,6 +82,25 @@ document.getElementById('corrupt').addEventListener('click', corruptOneChar)
 document.getElementById('download-source').addEventListener('click', () => download('program.tes', source.value, 'text/plain'))
 document.getElementById('download-svg').addEventListener('click', () => download('tessera.svg', artNode.querySelector('svg').outerHTML, 'image/svg+xml'))
 document.getElementById('download-manifest').addEventListener('click', () => download('tessera-manifest.json', JSON.stringify(currentManifest, null, 2), 'application/json'))
+document.querySelectorAll('[data-esolang]').forEach((button) => {
+  button.addEventListener('click', () => {
+    currentEsolang = button.dataset.esolang
+    forge()
+  })
+})
+document.getElementById('forge-generate').addEventListener('click', forge)
+document.getElementById('forge-message').addEventListener('input', forge)
+document.getElementById('cipher').addEventListener('change', forge)
+document.getElementById('cipher-key').addEventListener('input', forge)
+document.getElementById('forge-to-tessera').addEventListener('click', () => {
+  if (!currentForge) return
+  source.value = currentForge.tessera
+  cleanHash = ''
+  render()
+})
+document.getElementById('download-forge-svg').addEventListener('click', () => {
+  download('glowing-esolang-seal.svg', glowSealNode.querySelector('svg').outerHTML, 'image/svg+xml')
+})
 
 async function sha256(text) {
   const bytes = new TextEncoder().encode(text)
@@ -270,3 +295,170 @@ function escapeXml(value) {
   return value.replace(/[<>&"]/g, (char) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[char]))
 }
 
+async function forge() {
+  const message = document.getElementById('forge-message').value || 'THE ART IS THE SEAL'
+  const cipher = document.getElementById('cipher').value
+  const key = document.getElementById('cipher-key').value || 'SNAPKITTY'
+  const esolang = generateEsolang(currentEsolang, message)
+  const encrypted = applyCipher(esolang.source, cipher, key)
+  const sourceHash = await sha256(esolang.source)
+  const cipherHash = await sha256(encrypted)
+  const fusedHash = await sha256(`${currentEsolang}|${message}|${cipher}|${key}|${sourceHash}|${cipherHash}`)
+  const tessera = wrapEsolangAsTessera(esolang, fusedHash)
+  currentForge = { language: currentEsolang, message, cipher, key, esolang, encrypted, sourceHash, cipherHash, fusedHash, tessera }
+  esolangSourceNode.textContent = esolang.source
+  cipherOutputNode.textContent = [
+    `LANGUAGE: ${esolang.name}`,
+    `CIPHER: ${cipher}`,
+    `SOURCE_HASH: ${sourceHash}`,
+    `CIPHER_HASH: ${cipherHash}`,
+    `FUSED_GLOW_SEAL: ${fusedHash}`,
+    '',
+    encrypted
+  ].join('\n')
+  glowSealNode.innerHTML = renderGlowSeal(currentForge)
+}
+
+function generateEsolang(language, message) {
+  const clean = message.toUpperCase().replace(/[^A-Z0-9 ]/g, '').trim() || 'SEAL'
+  const chars = [...clean]
+  if (language === 'brainfuck') {
+    let pointer = 0
+    const cells = chars.map((char) => char.charCodeAt(0))
+    const source = cells.map((code, index) => {
+      const pluses = '+'.repeat(Math.max(1, Math.floor(code / 8)))
+      const rem = '+'.repeat(code % 8)
+      const move = index === 0 ? '' : '>'
+      pointer += 1
+      return `${move}${pluses}[>++++++++<-]>${rem}.`
+    }).join('\n')
+    return { name: 'Brainfuck', source, visualToken: '><+-[].,' }
+  }
+  if (language === 'malbolge') {
+    const alphabet = "('&%:9]!~}|z2Vxwv-,POqponl$Hjig%eB@@>}<M:9wv6WsU2T|nm-,jcL(I&%$#\"`CB]V?Tx<uVtT`Rpo3NlF.Jh++FdbCBA@?>=<;:9876543s+O<oLm"
+    const source = chars.map((char, index) => alphabet[(char.charCodeAt(0) + index * 13) % alphabet.length]).join('')
+    return { name: 'Malbolge', source: chunk(source, 60).join('\n'), visualToken: 'chaos' }
+  }
+  if (language === 'shakespeare') {
+    const words = chars.filter((char) => char !== ' ')
+    const source = [
+      'The Seal of Sovereign Art.',
+      '',
+      'Romeo, a brave agent.',
+      'Juliet, a luminous verifier.',
+      '',
+      'Act I: The glyph awakens.',
+      'Scene I: The WORM remembers.',
+      '',
+      ...words.map((char, index) => `Romeo: You are as ${index % 2 ? 'radiant' : 'honest'} as ${char.charCodeAt(0)} suns.`),
+      'Juliet: Open your heart.'
+    ].join('\n')
+    return { name: 'Shakespeare', source, visualToken: 'stage' }
+  }
+  if (language === 'chef') {
+    const source = [
+      'Glowing Hash Seal.',
+      '',
+      'Ingredients.',
+      ...chars.map((char) => `${char.charCodeAt(0)} g ${char === ' ' ? 'space' : char}`),
+      '',
+      'Method.',
+      'Fold glyphs into the mixing bowl.',
+      'Encrypt until luminous.',
+      'Seal with WORM.',
+      '',
+      'Serves one sovereign runtime.'
+    ].join('\n')
+    return { name: 'Chef', source, visualToken: 'recipe' }
+  }
+  if (language === 'lolcat') {
+    const source = [
+      'HAI 1.2',
+      'I HAS A SEAL ITZ "WORM"',
+      ...chars.map((char, index) => `VISIBLE "${index}:${char === ' ' ? 'SPACE' : char}"`),
+      'VISIBLE "ART IZ PROGRAM"',
+      'KTHXBYE'
+    ].join('\n')
+    return { name: 'Cat Code / LOLCODE', source, visualToken: 'cat' }
+  }
+  if (language === 'befunge') {
+    const line = `"${clean}"v`
+    const source = [
+      line,
+      '>' + chars.map(() => ':').join('') + 'v',
+      '^' + chars.map(() => '.').join('') + '@'
+    ].join('\n')
+    return { name: 'Befunge', source, visualToken: '2d' }
+  }
+  const source = chars.map((char) => {
+    const bits = char.charCodeAt(0).toString(2).padStart(8, '0')
+    return bits.replace(/0/g, ' ').replace(/1/g, '\t')
+  }).join('\n')
+  return { name: 'Whitespace', source, visualToken: 'invisible' }
+}
+
+function applyCipher(text, cipher, key) {
+  if (cipher === 'reverse') return [...text].reverse().join('')
+  if (cipher === 'xor') {
+    const bytes = [...text].map((char, index) => char.charCodeAt(0) ^ key.charCodeAt(index % key.length))
+    return chunk(bytes.map((byte) => byte.toString(16).padStart(2, '0')).join(''), 64).join('\n')
+  }
+  if (cipher === 'vigenere') {
+    return [...text].map((char, index) => shiftChar(char, key.charCodeAt(index % key.length) % 26)).join('')
+  }
+  const amount = [...key].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 26
+  return [...text].map((char) => shiftChar(char, amount)).join('')
+}
+
+function shiftChar(char, amount) {
+  const code = char.charCodeAt(0)
+  if (code >= 65 && code <= 90) return String.fromCharCode(((code - 65 + amount) % 26) + 65)
+  if (code >= 97 && code <= 122) return String.fromCharCode(((code - 97 + amount) % 26) + 97)
+  return char
+}
+
+function wrapEsolangAsTessera(forgeResult, fusedHash) {
+  const label = forgeResult.name.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '')
+  return `
+[ ${label} ] ----(->)---- [ CIPHER-${forgeResult.visualToken.toUpperCase()} ]
+      |                              |
+     (==)                           (==)
+      |                              |
+< HASH-${fusedHash.slice(0, 8).toUpperCase()} > -----> | WORM-SEAL |
+`.trim()
+}
+
+function renderGlowSeal(forgeResult) {
+  const hash = forgeResult.fusedHash
+  const rings = chunk(hash.slice(0, 48), 6)
+  const glyphs = forgeResult.esolang.source.replace(/\s/g, '').slice(0, 80)
+  const colors = ['#00ff88', '#f97316', '#7c3aed', '#8bd4ff']
+  const ringSvg = rings.map((part, index) => {
+    const radius = 44 + index * 18
+    const color = colors[index % colors.length]
+    const dash = (parseInt(part.slice(0, 2), 16) % 18) + 6
+    return `<circle cx="180" cy="180" r="${radius}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${dash} ${dash / 2}" opacity="${0.9 - index * 0.08}"/>`
+  }).join('')
+  const glyphText = chunk(glyphs, 20).map((line, index) => {
+    return `<text x="180" y="${150 + index * 18}" text-anchor="middle">${escapeXml(line)}</text>`
+  }).join('')
+  return `<svg viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" class="glow-svg">
+    <defs>
+      <filter id="glow"><feGaussianBlur stdDeviation="3.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <rect width="360" height="360" fill="#05060a"/>
+    <g filter="url(#glow)">
+      ${ringSvg}
+      <path d="M180 42 L306 180 L180 318 L54 180 Z" fill="none" stroke="#00ff88" stroke-width="2"/>
+      <text x="180" y="96" text-anchor="middle" class="seal-title">${escapeXml(forgeResult.esolang.name)}</text>
+      ${glyphText}
+      <text x="180" y="284" text-anchor="middle">${hash.slice(0, 24)}...</text>
+    </g>
+  </svg>`
+}
+
+function chunk(value, size) {
+  const parts = []
+  for (let i = 0; i < value.length; i += size) parts.push(value.slice(i, i + size))
+  return parts
+}

@@ -44,6 +44,59 @@
         </div>
       </section>
 
+      <section class="forge-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Esolang Crypto-Art Forge</p>
+            <h2>Brainfuck, Malbolge, Shakespeare, Chef, LOLCODE, Befunge, Whitespace</h2>
+          </div>
+          <div class="actions">
+            <button data-esolang="brainfuck">Brainfuck</button>
+            <button data-esolang="malbolge">Malbolge</button>
+            <button data-esolang="shakespeare">Shakespeare</button>
+            <button data-esolang="chef">Chef</button>
+            <button data-esolang="lolcat">Cat Code</button>
+            <button data-esolang="befunge">Befunge</button>
+            <button data-esolang="whitespace">Whitespace</button>
+          </div>
+        </div>
+        <div class="forge-grid">
+          <label>Message
+            <input id="forge-message" value="THE ART IS THE SEAL" spellcheck="false">
+          </label>
+          <label>Cipher
+            <select id="cipher">
+              <option value="caesar">Caesar Shift</option>
+              <option value="vigenere">Vigenere</option>
+              <option value="xor">XOR Hex</option>
+              <option value="reverse">Reverse</option>
+            </select>
+          </label>
+          <label>Cipher Key
+            <input id="cipher-key" value="SNAPKITTY" spellcheck="false">
+          </label>
+        </div>
+        <div class="actions">
+          <button id="forge-generate">Generate Esolang Seal</button>
+          <button id="forge-to-tessera">Send To Tessera Editor</button>
+          <button id="download-forge-svg">Download Glowing Seal SVG</button>
+        </div>
+        <div class="forge-output">
+          <article>
+            <h2>Esolang Source</h2>
+            <pre id="esolang-source"></pre>
+          </article>
+          <article>
+            <h2>Cipher Overlay</h2>
+            <pre id="cipher-output"></pre>
+          </article>
+          <article>
+            <h2>Glowing Hash Seal</h2>
+            <div id="glow-seal"></div>
+          </article>
+        </div>
+      </section>
+
       <section class="studio-grid">
         <article class="panel">
           <h2>Rendered Tessera</h2>
@@ -63,4 +116,3 @@
     <script src="studio.js"></script>
   </body>
 </html>
-

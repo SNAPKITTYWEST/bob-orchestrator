@@ -76,6 +76,8 @@ npm run studio
 
 Open `tessera/studio.html` through a local static server to edit spatial programs as art. The studio parses ASCII layout into nodes and edges, renders SVG, compiles BOB opcodes, computes the spatial SHA-256 seal, runs the one-character corruption demo, and exports `.tes`, `.svg`, and manifest JSON artifacts.
 
+The Esolang Crypto-Art Forge adds Brainfuck, Malbolge-inspired, Shakespeare, Chef, LOLCODE/Cat Code, Befunge, and Whitespace generators. Each source can be encrypted with Caesar, Vigenere, XOR-hex, or reverse ciphers, then fused into a glowing hash seal SVG. The generated esolang can also be wrapped back into a Tessera program so the art, source, cipher, and seal all become one executable artifact.
+
 ## MCP integration
 
 Install the companion MCP server to call BOB from Claude:

@@ -56,7 +56,8 @@ p { color: var(--muted); max-width: 840px; }
 
 .panel,
 .editor-panel,
-.seal-panel {
+.seal-panel,
+.forge-panel {
   border: 1px solid var(--line);
   background: var(--panel);
   border-radius: 8px;
@@ -111,6 +112,23 @@ textarea {
   overflow: auto;
 }
 
+input,
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #05060a;
+  color: var(--ink);
+  padding: 10px;
+  font: inherit;
+}
+
+label {
+  color: var(--muted);
+  display: grid;
+  gap: 8px;
+}
+
 dl { margin: 0; display: grid; gap: 14px; }
 dt { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; }
 dd { margin: 4px 0 0; overflow-wrap: anywhere; color: var(--ink); }
@@ -121,6 +139,58 @@ dd { margin: 4px 0 0; overflow-wrap: anywhere; color: var(--ink); }
   background: #05060a;
   border: 1px solid var(--line);
   border-radius: 6px;
+}
+
+.forge-panel {
+  margin: 22px 0;
+  display: grid;
+  gap: 16px;
+}
+
+.forge-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(180px, 0.35fr) minmax(220px, 0.45fr);
+  gap: 14px;
+}
+
+.forge-output {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(280px, 0.8fr);
+  gap: 14px;
+}
+
+.forge-output article {
+  min-width: 0;
+}
+
+.forge-output pre {
+  min-height: 280px;
+  max-height: 430px;
+}
+
+#glow-seal {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #05060a;
+  overflow: auto;
+}
+
+.glow-svg {
+  width: min(100%, 360px);
+  min-width: 280px;
+}
+
+.glow-svg text {
+  fill: var(--ink);
+  font: 11px ui-monospace, monospace;
+}
+
+.glow-svg .seal-title {
+  fill: var(--green);
+  font-size: 15px;
 }
 
 svg { display: block; min-width: 720px; }
@@ -169,8 +239,9 @@ pre {
 
 @media (max-width: 900px) {
   .workbench,
-  .studio-grid {
+  .studio-grid,
+  .forge-grid,
+  .forge-output {
     grid-template-columns: 1fr;
   }
 }
-

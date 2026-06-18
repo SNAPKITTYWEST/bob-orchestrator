@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Apple GitDOS by SnapKitty OS</title>
+    <link rel="stylesheet" href="gitdos.css">
+  </head>
+  <body>
+    <main class="crt">
+      <header class="bezel">
+        <div>
+          <p class="eyebrow">SNAPKITTY OS / A.P.E. COMPUTER DEMO</p>
+          <h1>APPLE GITDOS</h1>
+        </div>
+        <nav>
+          <a href="../">ROM</a>
+          <a href="../tessera/studio.html">TESSERA</a>
+          <button id="boot">BOOT</button>
+        </nav>
+      </header>
+      <section class="screen" aria-label="Apple GitDOS terminal chat">
+        <div id="terminal" class="terminal" role="log" aria-live="polite"></div>
+        <form id="command-form" autocomplete="off">
+          <label for="command">]</label>
+          <input id="command" spellcheck="false" autofocus>
+        </form>
+      </section>
+      <aside class="drive">
+        <div><span>DISK</span><strong id="disk-name">SNAPOS.DSK</strong></div>
+        <div><span>MODEL</span><strong id="model-name">nemotron</strong></div>
+        <div><span>WORM</span><strong id="worm-seal">GENESIS</strong></div>
+      </aside>
+    </main>
+    <script src="gitdos.js"></script>
+  </body>
+</html>
+

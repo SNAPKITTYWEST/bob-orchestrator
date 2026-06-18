@@ -15,8 +15,12 @@ const types = {
 
 createServer((request, response) => {
   const url = new URL(request.url || '/', `http://127.0.0.1:${port}`)
-  const requested = url.pathname === '/' ? '/tessera/studio.html' : url.pathname
-  const filePath = normalize(join(root, requested))
+  let requested = url.pathname === '/' ? '/index.html' : url.pathname
+  let filePath = normalize(join(root, requested))
+  if (existsSync(filePath) && statSync(filePath).isDirectory()) {
+    requested = `${requested.replace(/\/$/, '')}/index.html`
+    filePath = normalize(join(root, requested))
+  }
   if (!filePath.startsWith(root) || !existsSync(filePath) || !statSync(filePath).isFile()) {
     response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
     response.end('Not found')

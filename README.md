@@ -70,6 +70,9 @@ node tessera/tessera_demo.mjs
 
 # Tessera Studio art + crypto workbench
 npm run studio
+
+# Apple GitDOS by SnapKitty OS
+npm run gitdos
 ```
 
 ## Tessera Studio
@@ -77,6 +80,10 @@ npm run studio
 Open `tessera/studio.html` through a local static server to edit spatial programs as art. The studio parses ASCII layout into nodes and edges, renders SVG, compiles BOB opcodes, computes the spatial SHA-256 seal, runs the one-character corruption demo, and exports `.tes`, `.svg`, and manifest JSON artifacts.
 
 The Esolang Crypto-Art Forge adds Brainfuck, Malbolge-inspired, Shakespeare, Chef, LOLCODE/Cat Code, Befunge, and Whitespace generators. Each source can be encrypted with Caesar, Vigenere, XOR-hex, reverse, Unicode codepoints, reverse Unicode, MAGMA seals, macro strings, or emoji code, then fused into a glowing hash seal SVG. The generated esolang can also be wrapped back into a Tessera program so the art, source, cipher, and seal all become one executable artifact.
+
+## Apple GitDOS
+
+`apple-gitdos/` is a retro DOS-inspired AI terminal for the SnapKitty OS / A.P.E. computer demo. The terminal is the chat UI: type `HELP`, `CATALOG`, `ASK <prompt>`, `MODEL <tag>`, `STATUS`, `RUN TESSERA`, `SEAL <text>`, `PR#WORM`, or `SAVE`. It runs entirely on GitHub Pages, calls local Ollama over loopback when available, and seals chat/tool transcripts into a browser-local WORM chain.
 
 ## MCP integration
 

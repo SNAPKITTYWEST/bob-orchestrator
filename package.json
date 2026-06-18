@@ -10,7 +10,8 @@
     "lean-check": "lean lean4/SovereignGate.lean",
     "demo":       "node bridge/demo.mjs",
     "tessera":    "node tessera/tessera_demo.mjs",
-    "studio":     "node tessera/studio_server.mjs"
+    "studio":     "node tessera/studio_server.mjs",
+    "gitdos":     "node tessera/studio_server.mjs"
   },
   "dependencies": {
     "@snapkitty/mcp-server": "file:../snapkitty-mcp"

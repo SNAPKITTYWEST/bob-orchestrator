@@ -3,40 +3,79 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="refresh" content="0; url=tessera/studio.html">
-    <title>BOB Tessera Studio</title>
+    <title>SnapKitty OS Demos</title>
     <style>
       :root {
         color-scheme: dark;
         --bg: #08090d;
+        --panel: #11131b;
         --green: #00ff88;
+        --orange: #f97316;
         --muted: #aab4c4;
+        --line: #2a2e3c;
       }
+      * { box-sizing: border-box; }
       body {
         margin: 0;
         min-height: 100vh;
-        display: grid;
-        place-items: center;
         background: var(--bg);
         color: var(--green);
         font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
       }
       main {
-        width: min(720px, calc(100% - 32px));
+        width: min(980px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 56px 0;
+      }
+      h1 {
+        font-size: clamp(2.6rem, 7vw, 5rem);
+        margin: 0;
       }
       p {
         color: var(--muted);
+        line-height: 1.6;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+        margin-top: 28px;
       }
       a {
+        display: grid;
+        gap: 12px;
+        min-height: 210px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
         color: var(--green);
+        text-decoration: none;
+      }
+      a:hover {
+        border-color: var(--orange);
+        color: var(--orange);
+      }
+      span {
+        color: var(--muted);
       }
     </style>
   </head>
   <body>
     <main>
-      <h1>BOB Tessera Studio</h1>
-      <p>Opening the spatial art and cryptographic seal workbench.</p>
-      <a href="tessera/studio.html">Enter Tessera Studio</a>
+      <p>SNAPKITTY OS / A.P.E. COMPUTER DEMOS</p>
+      <h1>ROM SELECT</h1>
+      <p>Choose a browser-native demo. GitHub Pages is the ROM; local runtimes are optional tools.</p>
+      <section class="grid">
+        <a href="apple-gitdos/">
+          <strong>APPLE GITDOS</strong>
+          <span>Retro DOS-inspired AI terminal, continuous chat, tool commands, local Ollama, WORM transcript, GitHub Pages demo for the A.P.E. computer.</span>
+        </a>
+        <a href="tessera/studio.html">
+          <strong>TESSERA STUDIO</strong>
+          <span>Spatial esolang art engine, cryptographic seal forge, MAGMA/Unicode/emoji layers, SVG exports.</span>
+        </a>
+      </section>
     </main>
   </body>
 </html>

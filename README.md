@@ -151,6 +151,7 @@ node tessera/tessera_demo.mjs
 | SnapKitty Proofs | [SNAPKITTY-PROOFS](https://snapkittywest.github.io/SNAPKITTY-PROOFS/) |
 | TempleOS Oracle | [temple-os-oracle](https://snapkittywest.github.io/temple-os-oracle/) |
 | LLM Twin Arena | [llm-twin-arena](https://snapkittywest.github.io/llm-twin-arena/) |
+| Saint Errant · Classroom | [saint-errant/classroom](https://snapkittywest.github.io/saint-errant/classroom.html) |
 
 ---
 

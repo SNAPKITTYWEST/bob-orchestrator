@@ -150,6 +150,7 @@ node tessera/tessera_demo.mjs
 | Agent Farm Gauntlet | [agent-farm-gauntlet](https://snapkittywest.github.io/agent-farm-gauntlet/) |
 | SnapKitty Proofs | [SNAPKITTY-PROOFS](https://snapkittywest.github.io/SNAPKITTY-PROOFS/) |
 | TempleOS Oracle | [temple-os-oracle](https://snapkittywest.github.io/temple-os-oracle/) |
+| LLM Twin Arena | [llm-twin-arena](https://snapkittywest.github.io/llm-twin-arena/) |
 
 ---
 

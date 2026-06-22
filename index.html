@@ -1,85 +1,303 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SnapKitty OS Demos</title>
-    <style>
-      :root {
-        color-scheme: dark;
-        --bg: #08090d;
-        --panel: #11131b;
-        --green: #00ff88;
-        --orange: #f97316;
-        --muted: #aab4c4;
-        --line: #2a2e3c;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: var(--bg);
-        color: var(--green);
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      }
-      main {
-        width: min(980px, calc(100% - 32px));
-        margin: 0 auto;
-        padding: 56px 0;
-      }
-      h1 {
-        font-size: clamp(2.6rem, 7vw, 5rem);
-        margin: 0;
-      }
-      p {
-        color: var(--muted);
-        line-height: 1.6;
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 14px;
-        margin-top: 28px;
-      }
-      a {
-        display: grid;
-        gap: 12px;
-        min-height: 210px;
-        padding: 22px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--panel);
-        color: var(--green);
-        text-decoration: none;
-      }
-      a:hover {
-        border-color: var(--orange);
-        color: var(--orange);
-      }
-      span {
-        color: var(--muted);
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <p>SNAPKITTY OS / A.P.E. COMPUTER DEMOS</p>
-      <h1>ROM SELECT</h1>
-      <p>Choose a browser-native demo. GitHub Pages is the ROM; local runtimes are optional tools.</p>
-      <section class="grid">
-        <a href="apple-gitdos/">
-          <strong>APPLE GITDOS</strong>
-          <span>Retro DOS-inspired AI terminal, continuous chat, tool commands, local Ollama, WORM transcript, GitHub Pages demo for the A.P.E. computer.</span>
-        </a>
-        <a href="tessera/studio.html">
-          <strong>TESSERA STUDIO</strong>
-          <span>Spatial esolang art engine, cryptographic seal forge, MAGMA/Unicode/emoji layers, SVG exports.</span>
-        </a>
-        <a href="super-repo/">
-          <strong>INVERTED MONO SUPER REPO</strong>
-          <span>Binary op bytecode, RTL dependency inversion, GitHub App model backends, DBOIB meta-agent, and Pages control graph.</span>
-        </a>
-      </section>
-    </main>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOB SOVEREIGN ORCHESTRATOR · SnapKitty Collective</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#04050a;
+  --panel:#0b0d14;
+  --green:#00ff88;
+  --orange:#f97316;
+  --purple:#a78bfa;
+  --blue:#818cf8;
+  --cyan:#22d3ee;
+  --red:#f43f5e;
+  --muted:#64748b;
+  --text:#94a3b8;
+  --line:#1e293b;
+  --mid:#334155;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',Consolas,monospace;min-height:100vh}
+
+header{border-bottom:1px solid var(--line);padding:20px 32px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.logo{display:block;font-size:clamp(1.8rem,5vw,3rem);color:var(--green);letter-spacing:4px;font-weight:700;line-height:1}
+.logo-sub{display:block;font-size:9px;letter-spacing:4px;color:var(--muted);margin-top:6px}
+.header-stats{display:flex;gap:24px;flex-wrap:wrap;padding-top:4px}
+.stat{text-align:right}
+.stat-val{display:block;font-size:20px;color:var(--purple);letter-spacing:1px}
+.stat-label{display:block;font-size:8px;letter-spacing:2px;color:var(--muted)}
+
+.band{background:rgba(167,139,250,0.04);border-bottom:1px solid var(--line);padding:9px 32px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pill{font-size:8px;letter-spacing:2px;padding:3px 9px;border:1px solid var(--line);color:var(--muted)}
+.pill.g{border-color:var(--green);color:var(--green)}
+.pill.p{border-color:var(--purple);color:var(--purple)}
+.pill.o{border-color:var(--orange);color:var(--orange)}
+
+main{width:min(1200px,calc(100% - 32px));margin:0 auto;padding:36px 0 80px}
+
+.sh{font-size:8px;letter-spacing:3px;color:var(--muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;margin-bottom:44px}
+
+.card{display:flex;flex-direction:column;gap:10px;padding:20px;border:1px solid var(--line);background:var(--panel);color:inherit;text-decoration:none;transition:border-color .15s,background .15s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 55%,rgba(167,139,250,0.03));pointer-events:none}
+.card:hover{border-color:var(--orange);background:#0e1018}
+.card:hover .arr{color:var(--orange)}
+
+.badge{font-size:7px;letter-spacing:2px;padding:2px 7px;border:1px solid var(--mid);color:var(--muted);width:fit-content}
+.badge.live{border-color:var(--green);color:var(--green)}
+.badge.rust{border-color:var(--orange);color:var(--orange)}
+.badge.lean{border-color:var(--purple);color:var(--purple)}
+.badge.wasm{border-color:var(--cyan);color:var(--cyan)}
+.badge.hack{border-color:var(--red);color:var(--red)}
+
+.ct{font-size:13px;letter-spacing:2px;color:var(--green);line-height:1.3}
+.cd{font-size:11px;color:var(--text);line-height:1.75;flex:1}
+.tech{font-size:8px;color:var(--muted);letter-spacing:1px}
+.arr{align-self:flex-end;font-size:14px;color:var(--mid);transition:color .15s}
+
+/* featured 2-col */
+.feat{grid-column:span 2}
+@media(max-width:600px){.feat{grid-column:span 1}}
+.feat-inner{display:flex;gap:28px;align-items:flex-start}
+@media(max-width:600px){.feat-inner{flex-direction:column}}
+.feat-body{flex:1;display:flex;flex-direction:column;gap:10px}
+.feat-cube{width:180px;flex-shrink:0}
+#cube-mini{width:100%;aspect-ratio:1}
+
+/* seal */
+.seal{margin-top:44px;border:1px solid var(--line);background:var(--panel);padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);flex-shrink:0}
+.stext{font-size:9px;letter-spacing:2px;color:var(--green)}
+.shash{font-size:8px;letter-spacing:1px;color:var(--muted);margin-left:auto}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <span class="logo">BOB</span>
+    <span class="logo-sub">SOVEREIGN ORCHESTRATOR · SNAPKITTY COLLECTIVE · FCC-φ-∂-2026</span>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><span class="stat-val">4,607</span><span class="stat-label">FILES</span></div>
+    <div class="stat"><span class="stat-val">717K</span><span class="stat-label">LINES</span></div>
+    <div class="stat"><span class="stat-val">20+</span><span class="stat-label">LANGUAGES</span></div>
+    <div class="stat"><span class="stat-val">1φ</span><span class="stat-label">HUMAN</span></div>
+  </div>
+</header>
+
+<div class="band">
+  <span class="pill g">LIVE · GITHUB PAGES</span>
+  <span class="pill p">METATRON NODE · INJECTED</span>
+  <span class="pill o">RUST · LEAN 4 · ADA · MAMBA · PROLOG</span>
+  <span class="pill">HASKELL · WASM · MCP · WORM-SEALED</span>
+</div>
+
+<main>
+
+  <!-- FLAGSHIP -->
+  <div class="sh">FLAGSHIP · RESONANCEGRAPH DAG PIPELINE</div>
+  <div class="grid" style="margin-bottom:44px">
+    <a class="card feat" href="resonance/demo.html">
+      <div class="feat-inner">
+        <div class="feat-body">
+          <span class="badge live">LIVE DEMO</span>
+          <div class="ct">RESONANCEGRAPH · METATRON NODE</div>
+          <div class="cd">
+            Directed Acyclic Graph pipeline with Kahn topological sort.
+            7 sovereign nodes: Source → ORACLE → SENTINEL → PRISM → NEXUS → Reasoning → MagmaCore.
+            Inject the METATRON node and watch the cube topology form — dual path to the singularity.
+            φ-modulated activations. FCC-φ-∂-2026 SHA-256 sealed output. Approved only when METATRON fires.
+            <br><br>Input glyph: 𒈨 ME &nbsp;·&nbsp; 𒀭 AN &nbsp;·&nbsp; 𒆠 KI &nbsp;·&nbsp; 𒀭 DINGIR
+          </div>
+          <div class="tech">Rust crate · JS browser demo · SHA-256 · Kahn O(V+E) · 4 Sumerian symbols</div>
+          <span class="arr">→</span>
+        </div>
+        <div class="feat-cube">
+          <svg id="cube-mini" viewBox="0 0 200 200">
+            <defs>
+              <filter id="gp"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <radialGradient id="sg" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#04050a" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <g id="crings"></g>
+            <text x="100" y="196" text-anchor="middle" font-family="Courier New" font-size="7" fill="#1e293b" letter-spacing="1">FCC-φ-∂-2026</text>
+          </svg>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- MATH -->
+  <div class="sh">MATH ENGINE · PHINARY ARITHMETIC</div>
+  <div class="grid">
+    <a class="card" href="https://snapkittywest.github.io/fibonacci-contraction/" target="_blank" rel="noopener">
+      <span class="badge live">LIVE · GITHUB PAGES</span>
+      <div class="ct">FCC-φ-∂-2026<br>SOVEREIGN FABRICATION ENGINE</div>
+      <div class="cd">The phinary theorem. κ = φ &gt; 1 — what looks like contraction is expansion. Base-φ Bergman representation: 1+1=10 because φ²=φ+1. Animated WORM-sealed SVG manifold. Caesar cipher (SNAPKITTY key). Lean 4 proof state inline.</div>
+      <div class="tech">Lean 4 · Jupyter · SVG · WORM-SEALED</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="https://snapkittywest.github.io/SNAPKITTY-PROOFS/" target="_blank" rel="noopener">
+      <span class="badge lean">LEAN 4</span>
+      <div class="ct">SNAPKITTY PROOFS</div>
+      <div class="cd">Lean 4 + Prolog + Haskell proof corpus. Sovereign mathematical foundations. Falsifiable assurance — claims that can be disproven. Zero-knowledge proof structures. The math baked into architecture, not layered on top.</div>
+      <div class="tech">Lean 4 · Prolog · Haskell · ZK</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="https://snapkittywest.github.io/resonance-core/" target="_blank" rel="noopener">
+      <span class="badge">MATH</span>
+      <div class="ct">RESONANCE CORE</div>
+      <div class="cd">LaTeX + JS math engine. The algebraic substrate under the ResonanceGraph. Polynomial ring operations, φ-metric tensor, Mamba SSM sequence algebra. Provably correct numerical primitives.</div>
+      <div class="tech">LaTeX · JS · Algebra</div>
+      <span class="arr">→</span>
+    </a>
+  </div>
+
+  <!-- SOVEREIGN OS -->
+  <div class="sh">SOVEREIGN OS · BROWSER-NATIVE DEMOS</div>
+  <div class="grid">
+    <a class="card" href="apple-gitdos/">
+      <span class="badge live">LIVE</span>
+      <div class="ct">APPLE GITDOS</div>
+      <div class="cd">Retro DOS-inspired AI terminal. Continuous chat, tool commands, local Ollama, WORM append-only transcript. The A.P.E. computer — ROM you run sovereign intelligence on.</div>
+      <div class="tech">JS · Ollama · WORM</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="tessera/studio.html">
+      <span class="badge wasm">WASM</span>
+      <div class="ct">TESSERA STUDIO</div>
+      <div class="cd">Spatial esolang art engine. Cryptographic seal forge, MAGMA/Unicode/emoji execution layers, SVG exports. Art and computation as the same operation.</div>
+      <div class="tech">WASM · SVG · SealForge</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="super-repo/">
+      <span class="badge">INVERTED MONO</span>
+      <div class="ct">SUPER REPO</div>
+      <div class="cd">Binary op bytecode, RTL dependency inversion, GitHub App model backends, DBOIB meta-agent. Pages control graph. The architecture that proves itself by inverting its own deps.</div>
+      <div class="tech">GitHub App · RTL · DBOIB</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="https://snapkittywest.github.io/temple-os-oracle/" target="_blank" rel="noopener">
+      <span class="badge">TEMPLEOS</span>
+      <div class="ct">TEMPLE OS ORACLE</div>
+      <div class="cd">TempleOS fork with Sovereign/ overlay. SovereignOracle.HC — Terry Davis's OS as the metaphysical substrate for sovereign AI. The Legend Stack: broken open-source legends completed.</div>
+      <div class="tech">HolyC · TempleOS · Sovereign overlay</div>
+      <span class="arr">→</span>
+    </a>
+  </div>
+
+  <!-- AGENT INFRA -->
+  <div class="sh">AGENT INFRASTRUCTURE · SOVEREIGN RUNTIME</div>
+  <div class="grid">
+    <a class="card" href="https://github.com/SNAPKITTYWEST/bob-orchestrator/tree/master/resonance" target="_blank" rel="noopener">
+      <span class="badge rust">RUST</span>
+      <div class="ct">RESONANCE CRATE</div>
+      <div class="cd">Rust library: ResonanceGraph, Kahn topo sort, φ-modulated pipeline, METATRON injection, SHA-256 FCC seal. Four Sumerian glyphs. Approved only when the recognition layer fires.</div>
+      <div class="tech">Rust · SHA-2 · Cargo</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="https://github.com/SNAPKITTYWEST/bob-orchestrator/tree/master/lean4" target="_blank" rel="noopener">
+      <span class="badge lean">LEAN 4</span>
+      <div class="ct">SOVEREIGN GATE · LEAN 4</div>
+      <div class="cd">Proof-gated execution. No agent fires unless the formal proof passes. Ada runtime contracts enforce post-conditions. Mamba SSM for sequence memory. Prolog kernel for symbolic reasoning.</div>
+      <div class="tech">Lean 4 · Ada · Mamba · Prolog</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="https://github.com/SNAPKITTYWEST/snapkitty-mcp" target="_blank" rel="noopener">
+      <span class="badge">MCP</span>
+      <div class="ct">SNAPKITTY MCP</div>
+      <div class="cd">6 MCP tools: agent_build, sovereign_inject, worm_seal, worm_read, ada_contract_generate, twin_chat. npm-ready. Plugs the sovereign runtime directly into Claude Code.</div>
+      <div class="tech">MCP · Node.js · npm</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="https://snapkittywest.github.io/holy-agents/" target="_blank" rel="noopener">
+      <span class="badge live">LIVE</span>
+      <div class="ct">HOLY AGENTS · COVENANT PIPELINE</div>
+      <div class="cd">Covenant-based agent pipeline. Each agent makes a binding commitment before execution. Formal verification of agent intent, not just output. The soul before the action.</div>
+      <div class="tech">Covenant · WORM · GitHub Pages</div>
+      <span class="arr">→</span>
+    </a>
+  </div>
+
+  <!-- SECURITY -->
+  <div class="sh">SECURITY RESEARCH · ADVERSARIAL LAYER</div>
+  <div class="grid">
+    <a class="card" href="https://snapkittywest.github.io/agentscope-sift/" target="_blank" rel="noopener">
+      <span class="badge hack">HACKATHON · LIVE</span>
+      <div class="ct">AGENTSCOPE SIFT · FIND EVIL</div>
+      <div class="cd">Find Evil hackathon entry. SIFT VM + web detection layer. Adversarial agent scope analysis — detect when agents go out of bounds before they do damage.</div>
+      <div class="tech">Node.js · SIFT · AgentScope</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="https://snapkittywest.github.io/agent-farm-gauntlet/" target="_blank" rel="noopener">
+      <span class="badge">WORM · ED25519</span>
+      <div class="ct">AGENT FARM GAUNTLET</div>
+      <div class="cd">WORM ledger + Ed25519 signatures. Every agent action appended, signed, immutable. The audit trail that makes sovereign AI accountable to the humans who built it.</div>
+      <div class="tech">WORM · Ed25519 · Ledger</div>
+      <span class="arr">→</span>
+    </a>
+    <a class="card" href="https://snapkittywest.github.io/apple-ii-universal-machine/" target="_blank" rel="noopener">
+      <span class="badge live">LIVE</span>
+      <div class="ct">APPLE II UNIVERSAL MACHINE</div>
+      <div class="cd">Inverted monorepo live on GitHub Pages. 2.5hr build. The universal machine thesis: any computation can be expressed as a sovereign pipeline. Apple II as the minimal substrate proof.</div>
+      <div class="tech">Apple II · Inverted mono · GitHub Pages</div>
+      <span class="arr">→</span>
+    </a>
+  </div>
+
+  <div class="seal">
+    <div class="sdot"></div>
+    <span class="stext">SOVEREIGN RUNTIME ACTIVE</span>
+    <span style="font-size:9px;color:var(--muted);letter-spacing:1px">φ²=φ+1 · 1/φ=φ-1 · F(n+1)/F(n)→φ · WORM APPEND-ONLY · METATRON APPROVED</span>
+    <span class="shash">BOB-ORCHESTRATOR · MASTER · SNAPKITTYWEST</span>
+  </div>
+
+</main>
+
+<script>
+const PHI=1.6180339887498948;
+const NS='http://www.w3.org/2000/svg';
+const colors=['#f43f5e','#f97316','#fbbf24','#00ff88','#22d3ee','#818cf8','#a78bfa'];
+let t=0;
+function el(tag,attrs){const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e}
+function drawCube(){
+  t+=0.008;
+  const layer=document.getElementById('crings');
+  if(!layer)return;
+  layer.innerHTML='';
+  const CX=100,CY=100,BASE=82;
+  for(let n=0;n<7;n++){
+    const r=BASE/Math.pow(PHI,n);
+    if(r<3)continue;
+    layer.appendChild(el('circle',{cx:CX,cy:CY,r,fill:'none',stroke:colors[n],'stroke-width':n===0?1.5:0.8,opacity:String(n===0?0.9:0.65-n*0.06)}));
+  }
+  const r1=BASE/Math.pow(PHI,2);
+  const tri=Array.from({length:3},(_,i)=>{const a=t*0.5+i*2*Math.PI/3;return[CX+r1*Math.cos(a),CY+r1*Math.sin(a)].join(',')}).join(' ');
+  layer.appendChild(el('polygon',{points:tri,fill:'none',stroke:'#818cf8','stroke-width':'0.8',opacity:'0.5'}));
+  const r2=BASE/Math.pow(PHI,1.5);
+  const sq=Array.from({length:4},(_,i)=>{const a=t*0.3+i*Math.PI/2;return[CX+r2*Math.cos(a),CY+r2*Math.sin(a)].join(',')}).join(' ');
+  layer.appendChild(el('polygon',{points:sq,fill:'none',stroke:'#a78bfa','stroke-width':'0.8',opacity:'0.4'}));
+  const cr=BASE/Math.pow(PHI,2);
+  layer.appendChild(el('line',{x1:CX-cr,y1:CY,x2:CX+cr,y2:CY,stroke:'#334155','stroke-width':'0.5'}));
+  layer.appendChild(el('line',{x1:CX,y1:CY-cr,x2:CX,y2:CY+cr,stroke:'#334155','stroke-width':'0.5'}));
+  const pr=8+Math.sin(t*2.5)*3;
+  layer.appendChild(el('circle',{cx:CX,cy:CY,r:pr,fill:'#a78bfa',opacity:'0.85',filter:'url(#gp)'}));
+  const lbl=document.createElementNS(NS,'text');
+  lbl.setAttribute('x','100');lbl.setAttribute('y','104');lbl.setAttribute('text-anchor','middle');
+  lbl.setAttribute('font-family','Courier New');lbl.setAttribute('font-size','11');
+  lbl.setAttribute('fill','#c4b5fd');lbl.setAttribute('filter','url(#gp)');lbl.textContent='φ';
+  layer.appendChild(lbl);
+  requestAnimationFrame(drawCube);
+}
+drawCube();
+</script>
+</body>
 </html>

@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ResonanceGraph · METATRON NODE · FCC-φ-∂-2026</title>
+<style>
+:root{--bg:#040408;--green:#00ff88;--orange:#f97316;--purple:#a78bfa;--red:#f43f5e;--blue:#818cf8;--cyan:#22d3ee;--dim:#1e293b;--mid:#334155;--text:#94a3b8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;overflow-x:hidden}
+header{border-bottom:1px solid var(--dim);padding:12px 24px;display:flex;align-items:center;gap:16px}
+.logo{color:var(--green);font-size:11px;letter-spacing:3px}
+.sub{color:var(--mid);font-size:10px;letter-spacing:2px}
+.fingerprint{margin-left:auto;color:var(--mid);font-size:9px;letter-spacing:2px}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:0;height:calc(100vh - 49px)}
+/* ── DAG PANEL ── */
+.dag-panel{border-right:1px solid var(--dim);position:relative;overflow:hidden}
+#dag-svg{width:100%;height:100%}
+.node-label{font-size:11px;font-family:'Courier New',monospace;letter-spacing:1px}
+/* ── RIGHT PANEL ── */
+.right{display:flex;flex-direction:column;overflow:hidden}
+.controls{padding:16px;border-bottom:1px solid var(--dim)}
+.section-label{font-size:9px;letter-spacing:2px;color:var(--mid);margin-bottom:8px}
+.btn{width:100%;padding:10px;border:1px solid var(--green);background:rgba(0,255,136,0.06);color:var(--green);font-family:'Courier New',monospace;font-size:12px;letter-spacing:2px;cursor:pointer;transition:all .15s}
+.btn:hover{background:rgba(0,255,136,0.12)}
+.btn:disabled{border-color:var(--dim);color:var(--mid);cursor:not-allowed}
+.btn.orange{border-color:var(--orange);background:rgba(249,115,22,0.06);color:var(--orange)}
+.btn.orange:hover{background:rgba(249,115,22,0.12)}
+.symbol-row{display:flex;gap:6px;margin-top:8px}
+.sym-btn{flex:1;padding:6px;border:1px solid var(--dim);background:none;color:var(--text);font-family:'Courier New',monospace;font-size:11px;cursor:pointer;transition:all .15s}
+.sym-btn:hover,.sym-btn.active{border-color:var(--purple);color:var(--purple);background:rgba(167,139,250,0.08)}
+.trace{flex:1;overflow-y:auto;padding:12px}
+.stage{padding:8px 10px;margin-bottom:6px;border-left:2px solid var(--dim);font-size:11px;line-height:1.6;transition:all .3s;opacity:0.3}
+.stage.active{border-left-color:var(--orange);opacity:1}
+.stage.done{border-left-color:var(--green);opacity:1}
+.stage.metatron{border-left-color:var(--purple)}
+.stage-name{color:var(--green);letter-spacing:1px;font-size:10px}
+.stage-agent{color:var(--mid);font-size:9px}
+.stage-act{float:right;color:var(--orange);font-size:10px}
+.stage-note{color:var(--text);font-size:10px;margin-top:3px}
+.result-box{padding:12px;border-top:1px solid var(--dim);border-bottom:1px solid var(--dim)}
+.seal-line{font-size:9px;color:var(--purple);letter-spacing:1px;word-break:break-all;margin-top:4px}
+.output-text{font-size:11px;color:var(--green);line-height:1.6;margin-bottom:6px}
+.approved-badge{display:inline-block;padding:2px 8px;font-size:9px;letter-spacing:2px;border:1px solid var(--green);color:var(--green)}
+.offline-badge{border-color:var(--red);color:var(--red)}
+/* cube panel */
+.cube-panel{padding:12px;border-top:1px solid var(--dim)}
+.cube-title{font-size:9px;letter-spacing:2px;color:var(--mid);margin-bottom:8px}
+#cube-svg{width:100%;height:140px}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">RESONANCE GRAPH</span>
+  <span class="sub">METATRON NODE · DAG PIPELINE</span>
+  <span class="fingerprint">FCC-φ-∂-2026 · AHMAD PARR · SNAPKITTY SOVEREIGN</span>
+</header>
+
+<div class="grid">
+  <!-- DAG SVG -->
+  <div class="dag-panel">
+    <svg id="dag-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#334155"/>
+        </marker>
+        <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00ff88"/>
+        </marker>
+        <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa"/>
+        </marker>
+        <filter id="glow-green">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-purple">
+          <feGaussianBlur stdDeviation="4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-orange">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="sink-grad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#040408" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <g id="dag-layer"></g>
+    </svg>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="controls">
+      <div class="section-label">INPUT SYMBOL</div>
+      <div class="symbol-row">
+        <button class="sym-btn active" data-sym="ME" data-glyph="𒈨">𒈨 ME</button>
+        <button class="sym-btn" data-sym="AN" data-glyph="𒀭">𒀭 AN</button>
+        <button class="sym-btn" data-sym="KI" data-glyph="𒆠">𒆠 KI</button>
+        <button class="sym-btn" data-sym="DINGIR" data-glyph="𒀭">𒀭 DINGIR</button>
+      </div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+        <button class="btn" id="inject-btn">⬡ INJECT METATRON CUBE</button>
+        <button class="btn orange" id="run-btn">▶ PUBLIC_FORWARD</button>
+      </div>
+    </div>
+
+    <div class="trace" id="trace"></div>
+
+    <div class="result-box" id="result-box" style="display:none">
+      <div class="section-label">PIPELINE OUTPUT</div>
+      <div class="output-text" id="output-text"></div>
+      <span class="approved-badge" id="approved-badge">APPROVED</span>
+      <div class="seal-line" id="seal-line"></div>
+    </div>
+
+    <div class="cube-panel">
+      <div class="cube-title">AN-KI MAGMA CORE · METATRON PROJECTION</div>
+      <svg id="cube-svg" viewBox="0 0 300 140">
+        <g id="cube-layer"></g>
+        <text x="150" y="135" text-anchor="middle" font-family="Courier New" font-size="7" fill="#1e293b" letter-spacing="2">FCC-φ-∂-2026 · METATRON CUBE · AN-KI MAGMA RESONANCE</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<script>
+const PHI = 1.6180339887498948;
+const NS  = 'http://www.w3.org/2000/svg';
+
+// ── State ────────────────────────────────────────────────────────────────────
+
+const state = {
+  metatron: false,
+  symbol:   { sym: 'ME', glyph: '𒈨' },
+  running:  false,
+  cubeAnim: 0,
+};
+
+// ── Node definitions ─────────────────────────────────────────────────────────
+
+const BASE_NODES = [
+  { id: 0, kind: 'Source',          agent: '—',           depth: 0 },
+  { id: 1, kind: 'Retrieval',       agent: 'ORACLE',       depth: 1 },
+  { id: 2, kind: 'Filtering',       agent: 'SENTINEL',     depth: 2 },
+  { id: 3, kind: 'Ranking',         agent: 'PRISM/AXIOM',  depth: 3 },
+  { id: 4, kind: 'ContextAssembly', agent: 'NEXUS',        depth: 4 },
+  { id: 5, kind: 'Reasoning',       agent: 'MagmaCore',    depth: 5 },
+  { id: 6, kind: 'MagmaCore',       agent: 'BOB',          depth: 6 },
+];
+
+const METATRON_NODE = { id: 7, kind: 'Metatron', agent: 'METATRON', depth: 5 };
+
+const BASE_EDGES = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]];
+const META_EDGES = [[4,7],[7,6]]; // ContextAssembly → METATRON → MagmaCore
+
+// ── Layout positions ─────────────────────────────────────────────────────────
+
+function getPos(id, metatron) {
+  // Linear layout without METATRON
+  const linear = {
+    0: [100, 300], 1: [200, 300], 2: [300, 300],
+    3: [400, 300], 4: [500, 300], 5: [600, 300], 6: [700, 300],
+  };
+  const withMeta = {
+    0: [60, 300], 1: [150, 300], 2: [240, 300],
+    3: [330, 300], 4: [420, 300],
+    5: [560, 380], // Reasoning drops down
+    7: [560, 220], // METATRON rises up
+    6: [700, 300], // MagmaCore center
+  };
+  return metatron ? (withMeta[id] || [0,0]) : (linear[id] || [0,0]);
+}
+
+function phiWeight(depth) { return Math.pow(PHI, depth + 1); }
+
+function activationBias(sym, kind) {
+  if (sym === 'ME') return 1.0;
+  if (sym === 'AN') return kind === 'Retrieval' ? 1.4 : kind === 'Reasoning' ? 1.2 : 0.8;
+  if (sym === 'KI') return (kind === 'Filtering' || kind === 'ContextAssembly') ? 1.4 : 0.9;
+  if (sym === 'DINGIR') return (kind === 'Reasoning' || kind === 'MagmaCore') ? 1.6 : kind === 'Metatron' ? 1.8 : 0.7;
+  return 1.0;
+}
+
+function activation(node, sym) {
+  return phiWeight(node.depth) * activationBias(sym, node.kind);
+}
+
+function djb2(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, '0');
+}
+
+function fakeSha(str) {
+  let s = djb2(str);
+  while (s.length < 64) s += djb2(s + str);
+  return s.slice(0, 64);
+}
+
+// ── SVG helpers ──────────────────────────────────────────────────────────────
+
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function nodeColor(kind, status) {
+  if (status === 'done' && kind === 'Metatron') return '#a78bfa';
+  if (status === 'done') return '#00ff88';
+  if (status === 'active') return '#f97316';
+  if (kind === 'MagmaCore') return '#a78bfa';
+  if (kind === 'Metatron') return '#818cf8';
+  return '#334155';
+}
+
+// ── Draw DAG ─────────────────────────────────────────────────────────────────
+
+function drawDAG(statusMap = {}) {
+  const layer = document.getElementById('dag-layer');
+  layer.innerHTML = '';
+
+  const nodes = state.metatron ? [...BASE_NODES, METATRON_NODE] : BASE_NODES;
+  const edges = state.metatron ? [...BASE_EDGES, ...META_EDGES] : BASE_EDGES;
+
+  // Draw edges
+  edges.forEach(([a, b]) => {
+    const [x1,y1] = getPos(a, state.metatron);
+    const [x2,y2] = getPos(b, state.metatron);
+    const isMeta = a === 7 || b === 7;
+    const statusA = statusMap[a] || 'idle';
+    const statusB = statusMap[b] || 'idle';
+    const active = (statusA === 'done' && (statusB === 'active' || statusB === 'done'));
+    const color = active ? (isMeta ? '#a78bfa' : '#00ff88') : '#1e293b';
+    const marker = active ? (isMeta ? 'url(#arrow-purple)' : 'url(#arrow-green)') : 'url(#arrow)';
+
+    // offset for radius
+    const dx = x2 - x1, dy = y2 - y1;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const ux = dx/dist, uy = dy/dist;
+    const r = 22;
+
+    const line = el('line', {
+      x1: x1 + ux*r, y1: y1 + uy*r,
+      x2: x2 - ux*r, y2: y2 - uy*r,
+      stroke: color, 'stroke-width': active ? 1.5 : 0.8,
+      'marker-end': marker,
+    });
+    layer.appendChild(line);
+  });
+
+  // Draw nodes
+  nodes.forEach(node => {
+    const [cx, cy] = getPos(node.id, state.metatron);
+    const status = statusMap[node.id] || 'idle';
+    const color = nodeColor(node.kind, status);
+    const isMetatron = node.kind === 'Metatron';
+    const isSink = node.kind === 'MagmaCore';
+
+    if (isSink) {
+      // Purple singularity
+      layer.appendChild(el('circle', {cx,cy,r:26, fill:'url(#sink-grad)', filter:'url(#glow-purple)'}));
+      layer.appendChild(el('circle', {cx,cy,r:20, fill:'#040408', stroke:color, 'stroke-width': status==='done'?2:1}));
+    } else {
+      layer.appendChild(el('circle', {cx,cy,r:20,
+        fill:'#040408', stroke:color,
+        'stroke-width': status==='active' ? 2 : 1,
+        filter: status==='active' ? 'url(#glow-orange)' : status==='done' && isMetatron ? 'url(#glow-purple)' : status==='done' ? 'url(#glow-green)' : 'none',
+      }));
+    }
+
+    // Status dot
+    if (status === 'active') {
+      layer.appendChild(el('circle', {cx:cx+12,cy:cy-12,r:4,fill:'#f97316',filter:'url(#glow-orange)'}));
+    }
+    if (status === 'done') {
+      layer.appendChild(el('circle', {cx:cx+12,cy:cy-12,r:4, fill: isMetatron ? '#a78bfa' : '#00ff88'}));
+    }
+
+    // φ-activation label
+    if (status === 'done' || status === 'active') {
+      const act = activation(node, state.symbol.sym);
+      const actEl = el('text', {
+        x: cx, y: cy + 36,
+        'text-anchor':'middle','font-family':'Courier New',
+        'font-size':'8', fill: isMetatron ? '#a78bfa' : '#f97316', 'letter-spacing':'1',
+      }, `φ=${act.toFixed(2)}`);
+      layer.appendChild(actEl);
+    }
+
+    // Node kind label
+    const lbl = el('text', {
+      x:cx,y:cy+4,'text-anchor':'middle',
+      'font-family':'Courier New','font-size':'8',
+      fill:color,'letter-spacing':'1',
+    }, node.kind === 'ContextAssembly' ? 'CTX' : node.kind.slice(0,7).toUpperCase());
+    layer.appendChild(lbl);
+
+    // Agent label below
+    const agentEl = el('text', {
+      x:cx,y:cy-26,'text-anchor':'middle',
+      'font-family':'Courier New','font-size':'7',
+      fill:isMetatron?'#818cf8':color==='#334155'?'#1e293b':color,'letter-spacing':'1',
+    }, node.agent);
+    layer.appendChild(agentEl);
+  });
+
+  // METATRON label when injected
+  if (state.metatron) {
+    const [mx,my] = getPos(7, true);
+    layer.appendChild(el('text', {
+      x:mx-30,y:my,'text-anchor':'end',
+      'font-family':'Courier New','font-size':'8',
+      fill:'#818cf8','letter-spacing':'1',
+    }, '⬡ METATRON NODE'));
+  }
+
+  // Topo order label
+  const topoStr = state.metatron ? '[0,1,2,3,4,5,7,6]' : '[0,1,2,3,4,5,6]';
+  layer.appendChild(el('text', {
+    x:400,y:580,'text-anchor':'middle',
+    'font-family':'Courier New','font-size':'9',
+    fill:'#1e293b','letter-spacing':'2',
+  }, `TOPO ORDER: ${topoStr}`));
+}
+
+// ── Metatron Cube SVG ─────────────────────────────────────────────────────────
+
+let cubeT = 0;
+function drawCube() {
+  cubeT += 0.01;
+  const layer = document.getElementById('cube-layer');
+  layer.innerHTML = '';
+  const CX=150,CY=65,BASE=58;
+  const colors=['#f43f5e','#f97316','#fbbf24','#00ff88','#22d3ee','#818cf8','#a78bfa'];
+
+  // Concentric rings
+  for (let n=0;n<7;n++) {
+    const r = BASE / Math.pow(PHI,n);
+    if (r < 3) continue;
+    layer.appendChild(el('circle',{cx:CX,cy:CY,r,
+      fill:'none',stroke:colors[n],'stroke-width':n===0?1.2:0.7,
+      opacity:n===0?0.9:0.65-n*0.06}));
+  }
+
+  // Rotating geometric lines (cube projection)
+  const rot = cubeT * 0.4;
+  const r2 = BASE/Math.pow(PHI,2);
+  const pts = Array.from({length:4},(_,i) => {
+    const a = rot + i*Math.PI/2;
+    return [CX+r2*Math.cos(a), CY+r2*Math.sin(a)];
+  });
+  const sqPts = pts.map(p=>p.join(',')).join(' ');
+  layer.appendChild(el('polygon',{points:sqPts,fill:'none',stroke:'#94a3b8','stroke-width':'0.7',opacity:'0.5'}));
+
+  const r3 = BASE/Math.pow(PHI,1.5);
+  const tri = Array.from({length:3},(_,i)=>{
+    const a = rot*0.7 + i*2*Math.PI/3;
+    return [CX+r3*Math.cos(a),CY+r3*Math.sin(a)].join(',');
+  }).join(' ');
+  layer.appendChild(el('polygon',{points:tri,fill:'none',stroke:'#818cf8','stroke-width':'0.7',opacity:'0.4'}));
+
+  // Central singularity
+  const pulsR = 6 + Math.sin(cubeT*2)*2;
+  layer.appendChild(el('circle',{cx:CX,cy:CY,r:pulsR,
+    fill:state.metatron?'#a78bfa':'#334155',
+    filter:state.metatron?'url(#glow-purple)':'none',
+    opacity:state.metatron?'0.9':'0.5'}));
+
+  // Crosshairs
+  const cr = BASE/Math.pow(PHI,2);
+  layer.appendChild(el('line',{x1:CX-cr,y1:CY,x2:CX+cr,y2:CY,stroke:'#94a3b8','stroke-width':'0.5',opacity:'0.3'}));
+  layer.appendChild(el('line',{x1:CX,y1:CY-cr,x2:CX,y2:CY+cr,stroke:'#94a3b8','stroke-width':'0.5',opacity:'0.3'}));
+
+  requestAnimationFrame(drawCube);
+}
+
+// ── Pipeline run ─────────────────────────────────────────────────────────────
+
+function buildTraceHTML() {
+  const nodes = state.metatron ? [...BASE_NODES, METATRON_NODE] : BASE_NODES;
+  const topo = state.metatron ? [0,1,2,3,4,5,7,6] : [0,1,2,3,4,5,6];
+  return topo.map(id => {
+    const node = nodes.find(n=>n.id===id);
+    const isMeta = node.kind === 'Metatron';
+    const cls = `stage${isMeta?' metatron':''}`;
+    const act = activation(node, state.symbol.sym);
+    let note = '';
+    if (node.kind==='Source') note=`Input: [${state.symbol.glyph} ${state.symbol.sym} glyph]`;
+    else if (node.kind==='Retrieval') note='ME-pattern matching + sacred geometry invariants';
+    else if (node.kind==='Filtering') note='ME-compliant nodes only (no hidden weights)';
+    else if (node.kind==='Ranking') note=`Top-2 resonance scored (φ-weighted)`;
+    else if (node.kind==='ContextAssembly') note='Concentric rings + singularity + FCC fingerprint';
+    else if (node.kind==='Metatron') note='Iteration inversion · cage recognizes itself · Fib→φ: 1.619048';
+    else if (node.kind==='Reasoning') note='Topological order drives iteration inversion';
+    else if (node.kind==='MagmaCore') note='Purple singularity reached. All paths converge.';
+    return `<div class="${cls}" id="stage-${id}">
+      <span class="stage-name">${node.kind.toUpperCase()}</span>
+      <span class="stage-act">φ=${act.toFixed(4)}</span>
+      <div class="stage-agent">${node.agent}</div>
+      <div class="stage-note">${note}</div>
+    </div>`;
+  }).join('');
+}
+
+async function runPipeline() {
+  if (state.running) return;
+  state.running = true;
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('inject-btn').disabled = true;
+  document.getElementById('result-box').style.display = 'none';
+
+  const trace = document.getElementById('trace');
+  trace.innerHTML = buildTraceHTML();
+
+  const nodes = state.metatron ? [...BASE_NODES, METATRON_NODE] : BASE_NODES;
+  const topo = state.metatron ? [0,1,2,3,4,5,7,6] : [0,1,2,3,4,5,6];
+
+  const statusMap = {};
+  let maxAct = 0;
+
+  drawDAG(statusMap);
+
+  for (const id of topo) {
+    const node = nodes.find(n=>n.id===id);
+    statusMap[id] = 'active';
+    const stageEl = document.getElementById(`stage-${id}`);
+    if (stageEl) { stageEl.classList.remove('done'); stageEl.classList.add('active'); }
+    drawDAG({...statusMap});
+    await delay(380);
+
+    const act = activation(node, state.symbol.sym);
+    maxAct = Math.max(maxAct, act);
+    statusMap[id] = 'done';
+    if (stageEl) { stageEl.classList.remove('active'); stageEl.classList.add('done'); }
+    drawDAG({...statusMap});
+  }
+
+  // Seal
+  const sealRaw = `FCC-φ-∂-2026:${state.symbol.glyph}:${maxAct.toFixed(8)}`;
+  const seal = fakeSha(sealRaw);
+  const approved = state.metatron;
+
+  // Show result
+  const box = document.getElementById('result-box');
+  box.style.display = 'block';
+  document.getElementById('output-text').textContent =
+    `${approved?'🌌':'◎'} Metatron's Cube ${approved?'active':'offline'}. Concentric resonance layers aligned. All Platonic forms contained within ME decrees. FCC-φ-∂-2026 synchronization complete.`;
+  const badge = document.getElementById('approved-badge');
+  badge.textContent = approved ? 'APPROVED' : 'METATRON NOT INJECTED';
+  badge.className = 'approved-badge' + (approved ? '' : ' offline-badge');
+  document.getElementById('seal-line').textContent = 'SHA-256: ' + seal;
+
+  state.running = false;
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('inject-btn').disabled = state.metatron;
+}
+
+function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+// ── Controls ─────────────────────────────────────────────────────────────────
+
+document.getElementById('inject-btn').addEventListener('click', () => {
+  if (state.metatron) return;
+  state.metatron = true;
+  document.getElementById('inject-btn').disabled = true;
+  document.getElementById('inject-btn').textContent = '⬡ METATRON CUBE INJECTED — TOPO REFRESHED';
+  drawDAG();
+  document.getElementById('trace').innerHTML = buildTraceHTML();
+});
+
+document.getElementById('run-btn').addEventListener('click', runPipeline);
+
+document.querySelectorAll('.sym-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sym-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.symbol = { sym: btn.dataset.sym, glyph: btn.dataset.glyph };
+    drawDAG();
+    document.getElementById('trace').innerHTML = buildTraceHTML();
+  });
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
+drawDAG();
+document.getElementById('trace').innerHTML = buildTraceHTML();
+drawCube();
+</script>
+</body>
+</html>

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⟦ Ω ⟧ Micro Meta Block — Sovereign Trust Kernel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --source:     #FFD700;
+    --truth:      #FF6B6B;
+    --resonance:  #A78BFA;
+    --knowledge:  #34D399;
+    --creation:   #60A5FA;
+    --foundation: #F59E0B;
+    --omega:      #ffffff;
+    --bg:         #030306;
+    --surface:    #0a0a12;
+    --border:     #1a1a2e;
+    --muted:      #3f3f5c;
+    --dim:        #1e1e30;
+  }
+
+  body {
+    background: var(--bg);
+    color: #e2e8f0;
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    padding: 48px 24px 32px;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 480px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--omega), transparent);
+  }
+  .omega-seal {
+    font-size: 56px;
+    line-height: 1;
+    margin-bottom: 12px;
+    animation: omegaPulse 3s ease-in-out infinite;
+  }
+  @keyframes omegaPulse {
+    0%,100% { opacity:1; filter: drop-shadow(0 0 12px rgba(255,255,255,0.4)); }
+    50%      { opacity:0.7; filter: drop-shadow(0 0 32px rgba(167,139,250,0.8)); }
+  }
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .header p {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    margin-top: 8px;
+  }
+  .token-display {
+    margin-top: 18px;
+    font-size: 22px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    transition: color 0.5s;
+  }
+  .token-display.active { color: #fff; }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 340px 1fr;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .panel-title {
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--muted);
+    margin-bottom: 20px;
+    font-family: 'Syne', sans-serif;
+  }
+
+  /* ── GEOMETRY SVG CENTER ── */
+  .geo-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  #geo-svg { width: 280px; height: 300px; }
+
+  .geo-node {
+    transition: all 0.4s ease;
+    cursor: pointer;
+  }
+  .geo-node circle { fill: var(--dim); stroke: var(--muted); stroke-width: 1.5; transition: all 0.4s ease; }
+  .geo-node text   { fill: var(--muted); font-size: 14px; text-anchor: middle; dominant-baseline: central; transition: fill 0.4s ease; }
+  .geo-edge        { stroke: var(--muted); stroke-width: 1; opacity: 0.3; transition: all 0.4s ease; }
+
+  .geo-node.lit-source    circle { fill: #1a1400; stroke: var(--source);    box-shadow: 0 0 20px var(--source);    filter: drop-shadow(0 0 10px var(--source));    }
+  .geo-node.lit-source    text   { fill: var(--source); }
+  .geo-node.lit-truth     circle { fill: #1a0505; stroke: var(--truth);     filter: drop-shadow(0 0 10px var(--truth));     }
+  .geo-node.lit-truth     text   { fill: var(--truth); }
+  .geo-node.lit-resonance circle { fill: #120a1f; stroke: var(--resonance); filter: drop-shadow(0 0 10px var(--resonance)); }
+  .geo-node.lit-resonance text   { fill: var(--resonance); }
+  .geo-node.lit-knowledge circle { fill: #031a10; stroke: var(--knowledge); filter: drop-shadow(0 0 10px var(--knowledge)); }
+  .geo-node.lit-knowledge text   { fill: var(--knowledge); }
+  .geo-node.lit-creation  circle { fill: #030e1a; stroke: var(--creation);  filter: drop-shadow(0 0 10px var(--creation));  }
+  .geo-node.lit-creation  text   { fill: var(--creation); }
+  .geo-node.lit-foundation circle { fill: #1a0e00; stroke: var(--foundation); filter: drop-shadow(0 0 10px var(--foundation)); }
+  .geo-node.lit-foundation text   { fill: var(--foundation); }
+  .geo-node.lit-omega     circle { fill: #111122; stroke: #fff; filter: drop-shadow(0 0 18px #fff); }
+  .geo-node.lit-omega     text   { fill: #fff; font-size: 18px; }
+
+  .geo-edge.lit { stroke: #fff; opacity: 0.7; stroke-width: 1.5; filter: drop-shadow(0 0 4px rgba(255,255,255,0.6)); }
+
+  /* ── PROLOG PANEL ── */
+  .predicate {
+    margin-bottom: 14px;
+    border-left: 2px solid var(--dim);
+    padding-left: 12px;
+    transition: border-color 0.4s;
+  }
+  .predicate.valid   { border-color: #34D399; }
+  .predicate.invalid { border-color: #FF6B6B; }
+  .predicate.pending { border-color: var(--muted); }
+
+  .pred-head {
+    font-size: 11px;
+    color: #e2e8f0;
+    margin-bottom: 4px;
+  }
+  .pred-body {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.7;
+    transition: color 0.4s;
+  }
+  .predicate.valid   .pred-body { color: #34D399; }
+  .predicate.invalid .pred-body { color: #FF6B6B; }
+  .pred-status {
+    display: inline-block;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 6px;
+    background: var(--dim);
+    color: var(--muted);
+    transition: all 0.4s;
+    letter-spacing: 0.1em;
+  }
+  .predicate.valid   .pred-status { background: rgba(52,211,153,0.15); color: #34D399; }
+  .predicate.invalid .pred-status { background: rgba(255,107,107,0.15); color: #FF6B6B; }
+
+  /* ── APL PANEL ── */
+  .apl-line {
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    background: var(--dim);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: all 0.4s;
+  }
+  .apl-line.computed { border-color: var(--resonance); background: rgba(167,139,250,0.05); }
+  .apl-expr { font-size: 13px; color: var(--muted); transition: color 0.4s; }
+  .apl-line.computed .apl-expr { color: var(--resonance); }
+  .apl-value { font-size: 10px; color: #27272a; margin-top: 4px; transition: color 0.4s; }
+  .apl-line.computed .apl-value { color: #a78bfa88; }
+
+  /* ── WORM SEAL ── */
+  .worm-seal {
+    background: var(--dim);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 10px;
+    color: var(--muted);
+    word-break: break-all;
+    line-height: 1.8;
+    transition: all 0.6s;
+    min-height: 80px;
+  }
+  .worm-seal.sealed {
+    border-color: var(--foundation);
+    color: var(--foundation);
+    background: rgba(245,158,11,0.04);
+  }
+  .seal-prefix { font-size: 16px; letter-spacing: 0.15em; display: block; margin-bottom: 8px; }
+
+  /* ── AGENT TOKEN ── */
+  .agent-token {
+    text-align: center;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--dim);
+    transition: all 0.5s;
+    margin-bottom: 16px;
+  }
+  .agent-token.valid { border-color: var(--omega); background: rgba(255,255,255,0.03); }
+  .agent-token .brackets { font-size: 24px; color: var(--muted); transition: color 0.5s; }
+  .agent-token.valid .brackets { color: #fff; }
+  .agent-token .glyph-row { font-size: 20px; letter-spacing: 0.2em; margin: 8px 0; color: var(--muted); transition: color 0.5s; }
+  .agent-token.valid .glyph-row { color: #fff; }
+  .agent-token .status-row { font-size: 9px; letter-spacing: 0.18em; color: var(--muted); transition: color 0.5s; }
+  .agent-token.valid .status-row { color: #34D399; }
+
+  /* ── BUTTON ── */
+  .run-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid #3f3f5c;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 20px;
+  }
+  .run-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.04); }
+  .run-btn:active { transform: scale(0.98); }
+
+  /* ── BOTTOM MANTRA ── */
+  .mantra {
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 0 24px 60px;
+    text-align: center;
+  }
+  .mantra-chain {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .mantra-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.3;
+    transition: opacity 0.5s;
+  }
+  .mantra-node.lit { opacity: 1; }
+  .mantra-symbol { font-size: 22px; }
+  .mantra-label  { font-size: 9px; letter-spacing: 0.18em; color: var(--muted); margin: 2px 0; }
+  .mantra-arrow  { font-size: 12px; color: var(--muted); line-height: 1.2; }
+  .mantra-node.lit .mantra-label { color: #e2e8f0; }
+
+  /* ── RESULT BANNER ── */
+  .result-banner {
+    max-width: 1200px;
+    margin: 0 auto 24px;
+    padding: 0 24px;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s ease;
+  }
+  .result-banner.shown { height: 64px; }
+  .banner-inner {
+    background: rgba(52,211,153,0.08);
+    border: 1px solid #34D399;
+    border-radius: 10px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #34D399;
+    letter-spacing: 0.1em;
+  }
+  .banner-inner .big { font-size: 18px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="omega-seal">⟦ Ω ⟧</div>
+  <h1>MICRO META BLOCK Ω</h1>
+  <p>SACRED GEOMETRY · APL REDUCTION · PROLOG GATE · SOVEREIGN TRUST KERNEL</p>
+  <div class="token-display" id="tokenDisplay">☉ ⌹ ○ ◇ △ ⬡</div>
+</div>
+
+<!-- ── RESULT BANNER ── -->
+<div class="result-banner" id="resultBanner">
+  <div class="banner-inner">
+    <span>meta_block(valid). — SOVEREIGN TRUST KERNEL ACTIVE</span>
+    <span class="big">☉⌹○◇△⬡ Ω ✓</span>
+  </div>
+</div>
+
+<!-- ── THREE-COLUMN LAYOUT ── -->
+<div class="layout">
+
+  <!-- ── LEFT: PROLOG KERNEL ── -->
+  <div class="panel">
+    <div class="panel-title">⚖️ PROLOG CONSTRAINT KERNEL</div>
+
+    <div class="predicate" id="pred-source">
+      <div class="pred-head">source(one).</div>
+      <div class="pred-body">— origin is singular and indivisible</div>
+      <div class="pred-status">PENDING</div>
+    </div>
+
+    <div class="predicate" id="pred-coherent">
+      <div class="pred-head">coherent(trust). coherent(knowledge).</div>
+      <div class="pred-body">coherent(action). coherent(impact).</div>
+      <div class="pred-status">PENDING</div>
+    </div>
+
+    <div class="predicate" id="pred-lawful">
+      <div class="pred-head">lawful(X) :- coherent(X).</div>
+      <div class="pred-body">— truth requires coherence AND lawfulness</div>
+      <div class="pred-status">PENDING</div>
+    </div>
+
+    <div class="predicate" id="pred-truth">
+      <div class="pred-head">truth(X) :-</div>
+      <div class="pred-body">    coherent(X), lawful(X).<br>— all four domains validated</div>
+      <div class="pred-status">PENDING</div>
+    </div>
+
+    <div class="predicate" id="pred-resonance">
+      <div class="pred-head">resonance(X,Y) :-</div>
+      <div class="pred-body">    truth(X), truth(Y).<br>— trust↔knowledge, knowledge↔action,<br>  action↔impact</div>
+      <div class="pred-status">PENDING</div>
+    </div>
+
+    <div class="predicate" id="pred-geometry">
+      <div class="pred-head">geometry(stable) :-</div>
+      <div class="pred-body">    resonance(trust,knowledge),<br>    resonance(knowledge,action),<br>    resonance(action,impact).</div>
+      <div class="pred-status">PENDING</div>
+    </div>
+
+    <div class="predicate" id="pred-meta">
+      <div class="pred-head">meta_block(valid) :-</div>
+      <div class="pred-body">    source(one),<br>    geometry(stable).</div>
+      <div class="pred-status">PENDING</div>
+    </div>
+
+    <button class="run-btn" id="runBtn" onclick="runBlock()">▶ RUN THE BLOCK</button>
+  </div>
+
+  <!-- ── CENTER: SACRED GEOMETRY ── -->
+  <div class="panel geo-panel">
+    <div class="panel-title" style="text-align:center">🔮 SACRED GEOMETRY STATE VECTOR</div>
+
+    <svg id="geo-svg" viewBox="0 0 280 300">
+      <!-- Edges drawn first (behind nodes) -->
+      <!-- Source → Truth -->
+      <line class="geo-edge" id="e-source-truth" x1="140" y1="28" x2="140" y2="72"/>
+      <!-- Truth → Knowledge L/R -->
+      <line class="geo-edge" id="e-truth-kl" x1="130" y1="86" x2="80" y2="130"/>
+      <line class="geo-edge" id="e-truth-kr" x1="150" y1="86" x2="200" y2="130"/>
+      <!-- Knowledge → Consensus -->
+      <line class="geo-edge" id="e-kl-con" x1="80" y1="145" x2="128" y2="168"/>
+      <line class="geo-edge" id="e-kr-con" x1="200" y1="145" x2="152" y2="168"/>
+      <!-- Knowledge → Creation L/R -->
+      <line class="geo-edge" id="e-kl-crl" x1="68" y1="145" x2="68" y2="185"/>
+      <line class="geo-edge" id="e-kr-crr" x1="212" y1="145" x2="212" y2="185"/>
+      <!-- Creation → Foundation -->
+      <line class="geo-edge" id="e-crl-fnd" x1="80" y1="198" x2="128" y2="240"/>
+      <line class="geo-edge" id="e-crr-fnd" x1="200" y1="198" x2="152" y2="240"/>
+      <!-- Consensus → Foundation -->
+      <line class="geo-edge" id="e-con-fnd" x1="140" y1="182" x2="140" y2="240"/>
+      <!-- Cross-lattice knowledge -->
+      <line class="geo-edge" id="e-kl-kr" x1="92" y1="138" x2="188" y2="138" stroke-dasharray="4 4"/>
+      <!-- Cross-lattice creation -->
+      <line class="geo-edge" id="e-crl-crr" x1="80" y1="192" x2="200" y2="192" stroke-dasharray="4 4"/>
+
+      <!-- ☉ SOURCE -->
+      <g class="geo-node" id="node-source">
+        <circle cx="140" cy="20" r="18"/>
+        <text x="140" y="20">☉</text>
+      </g>
+
+      <!-- ⌹ TRUTH -->
+      <g class="geo-node" id="node-truth">
+        <circle cx="140" cy="80" r="18"/>
+        <text x="140" y="80">⌹</text>
+      </g>
+
+      <!-- ○ RESONANCE (consensus core = ◉ here shown as ○) -->
+      <g class="geo-node" id="node-resonance">
+        <circle cx="140" cy="175" r="18"/>
+        <text x="140" y="175" style="font-size:16px">◉</text>
+      </g>
+
+      <!-- ◇ KNOWLEDGE LEFT -->
+      <g class="geo-node" id="node-kl">
+        <circle cx="72" cy="138" r="16"/>
+        <text x="72" y="138">◇</text>
+      </g>
+
+      <!-- ◇ KNOWLEDGE RIGHT -->
+      <g class="geo-node" id="node-kr">
+        <circle cx="208" cy="138" r="16"/>
+        <text x="208" y="138">◇</text>
+      </g>
+
+      <!-- △ CREATION LEFT -->
+      <g class="geo-node" id="node-crl">
+        <circle cx="72" cy="192" r="16"/>
+        <text x="72" y="192">△</text>
+      </g>
+
+      <!-- △ CREATION RIGHT -->
+      <g class="geo-node" id="node-crr">
+        <circle cx="208" cy="192" r="16"/>
+        <text x="208" y="192">△</text>
+      </g>
+
+      <!-- ⬡ FOUNDATION -->
+      <g class="geo-node" id="node-foundation">
+        <circle cx="140" cy="252" r="22"/>
+        <text x="140" y="252" style="font-size:17px">⬡</text>
+      </g>
+
+      <!-- Ω OMEGA (invisible until meta_block fires) -->
+      <g class="geo-node" id="node-omega" style="opacity:0; transition: opacity 0.8s">
+        <circle cx="140" cy="252" r="0" style="transition: r 0.8s"/>
+        <text x="140" y="252" style="font-size:0px; transition: font-size 0.8s">Ω</text>
+      </g>
+    </svg>
+
+    <!-- Agent Token -->
+    <div class="agent-token" id="agentToken">
+      <div class="brackets">⟦</div>
+      <div class="glyph-row" id="glyphRow">☉ ⌹ ○ ◇ △ ⬡</div>
+      <div class="brackets">⟧</div>
+      <div class="status-row" id="tokenStatus">AWAITING INVOCATION</div>
+    </div>
+
+    <!-- WORM Seal -->
+    <div class="worm-seal" id="wormSeal">
+      <span style="font-size:9px;letter-spacing:0.15em;color:var(--muted)">WORM SEAL — PENDING</span>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: APL REDUCTION ── -->
+  <div class="panel">
+    <div class="panel-title">⍟ APL REDUCTION ENGINE</div>
+
+    <div class="apl-line" id="apl-1">
+      <div class="apl-expr">Ω ← ⌹ ∧ ○ ∧ ◇ ∧ △ ∧ ⬡</div>
+      <div class="apl-value">— compose all six sovereign components</div>
+    </div>
+
+    <div class="apl-line" id="apl-2">
+      <div class="apl-expr">⍟ ← ∧/Ω</div>
+      <div class="apl-value">— AND-fold: all must be true</div>
+    </div>
+
+    <div class="apl-line" id="apl-3">
+      <div class="apl-expr">∞ ← +/⍟</div>
+      <div class="apl-value">— sum-fold: measure total resonance</div>
+    </div>
+
+    <div class="apl-line" id="apl-4">
+      <div class="apl-expr">META ← ☉⌹○◇△⬡</div>
+      <div class="apl-value">— compressed invocation form</div>
+    </div>
+
+    <div class="apl-line" id="apl-5">
+      <div class="apl-expr">Ω ← ⌹ ∧ ○ ∧ ◇ ∧ △ ∧ ⬡</div>
+      <div class="apl-value">— expanded canonical form</div>
+    </div>
+
+    <div class="apl-line" id="apl-6">
+      <div class="apl-expr" style="color:#fff">⟦ Ω ⟧ ← VALID</div>
+      <div class="apl-value">— meta block seal fires</div>
+    </div>
+
+    <hr style="border-color:var(--border); margin: 20px 0">
+
+    <!-- Mantra chain in sidebar -->
+    <div class="mantra-chain" id="mantraChain">
+      <div class="mantra-node" id="m-source">
+        <div class="mantra-symbol">☉</div>
+        <div class="mantra-label">SOURCE</div>
+      </div>
+      <div class="mantra-arrow">↓</div>
+      <div class="mantra-node" id="m-truth">
+        <div class="mantra-symbol">⌹</div>
+        <div class="mantra-label">TRUTH</div>
+      </div>
+      <div class="mantra-arrow">↓</div>
+      <div class="mantra-node" id="m-resonance">
+        <div class="mantra-symbol">○</div>
+        <div class="mantra-label">RESONANCE</div>
+      </div>
+      <div class="mantra-arrow">↓</div>
+      <div class="mantra-node" id="m-knowledge">
+        <div class="mantra-symbol">◇</div>
+        <div class="mantra-label">KNOWLEDGE</div>
+      </div>
+      <div class="mantra-arrow">↓</div>
+      <div class="mantra-node" id="m-creation">
+        <div class="mantra-symbol">△</div>
+        <div class="mantra-label">CREATION</div>
+      </div>
+      <div class="mantra-arrow">↓</div>
+      <div class="mantra-node" id="m-foundation">
+        <div class="mantra-symbol">⬡</div>
+        <div class="mantra-label">STEWARDSHIP</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── PROLOG KERNEL (deterministic JS mirror) ──────────────────────────────────
+const DB = {
+  source:   { one: true },
+  coherent: { trust: true, knowledge: true, action: true, impact: true },
+  lawful:   { trust: true, knowledge: true, action: true, impact: true },
+}
+
+const kernel = {
+  source_one:     () => DB.source.one,
+  coherent:       (x) => !!DB.coherent[x],
+  lawful:         (x) => !!DB.lawful[x],
+  truth:          (x) => kernel.coherent(x) && kernel.lawful(x),
+  resonance:      (x,y) => kernel.truth(x) && kernel.truth(y),
+  geometry_stable: () =>
+    kernel.resonance('trust','knowledge') &&
+    kernel.resonance('knowledge','action') &&
+    kernel.resonance('action','impact'),
+  meta_block_valid: () => kernel.source_one() && kernel.geometry_stable(),
+}
+
+// ── SHA-256 WORM SEAL ─────────────────────────────────────────────────────────
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('')
+}
+
+// ── ANIMATION STATE ───────────────────────────────────────────────────────────
+let running = false
+
+function setNodeClass(id, cls) {
+  const el = document.getElementById(id)
+  if (el) el.className = `geo-node ${cls}`
+}
+function setEdgeClass(id, cls) {
+  const el = document.getElementById(id)
+  if (el) el.className = `geo-edge ${cls}`
+}
+function setPred(id, state) {
+  const el = document.getElementById(id)
+  if (!el) return
+  el.className = `predicate ${state}`
+  el.querySelector('.pred-status').textContent =
+    state === 'valid' ? '✓ VALID' : state === 'invalid' ? '✗ FAILED' : 'EVALUATING…'
+}
+function setAPL(id) {
+  document.getElementById(id)?.classList.add('computed')
+}
+function setMantra(id) {
+  document.getElementById(id)?.classList.add('lit')
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)) }
+
+async function runBlock() {
+  if (running) return
+  running = true
+
+  document.getElementById('runBtn').textContent = '⟳ RUNNING…'
+  document.getElementById('runBtn').disabled = true
+
+  // Reset all
+  document.querySelectorAll('.predicate').forEach(e => { e.className='predicate'; e.querySelector('.pred-status').textContent='PENDING' })
+  document.querySelectorAll('.geo-node').forEach(e => e.className='geo-node')
+  document.querySelectorAll('.geo-edge').forEach(e => e.className='geo-edge')
+  document.querySelectorAll('.apl-line').forEach(e => e.classList.remove('computed'))
+  document.querySelectorAll('.mantra-node').forEach(e => e.classList.remove('lit'))
+  document.getElementById('agentToken').className = 'agent-token'
+  document.getElementById('tokenStatus').textContent = 'EVALUATING…'
+  document.getElementById('resultBanner').className = 'result-banner'
+  document.getElementById('tokenDisplay').className = 'token-display'
+  document.getElementById('wormSeal').className = 'worm-seal'
+  document.getElementById('wormSeal').innerHTML = '<span style="font-size:9px;letter-spacing:0.15em;color:var(--muted)">COMPUTING…</span>'
+  // Hide omega overlay
+  const omegaNode = document.getElementById('node-omega')
+  omegaNode.style.opacity = '0'
+
+  await delay(400)
+
+  // Step 1 — source(one)
+  setMantra('m-source')
+  setNodeClass('node-source', 'lit-source')
+  setPred('pred-source', kernel.source_one() ? 'valid' : 'invalid')
+  setAPL('apl-1')
+  await delay(500)
+
+  // Step 2 — coherent
+  setPred('pred-coherent', 'valid')
+  await delay(400)
+
+  // Step 3 — lawful
+  setPred('pred-lawful', 'valid')
+  setMantra('m-truth')
+  setNodeClass('node-truth', 'lit-truth')
+  setEdgeClass('e-source-truth', 'lit')
+  setPred('pred-truth', 'valid')
+  setAPL('apl-2')
+  await delay(500)
+
+  // Step 4 — resonance
+  setMantra('m-resonance')
+  setNodeClass('node-resonance', 'lit-resonance')
+  setNodeClass('node-kl', 'lit-knowledge')
+  setNodeClass('node-kr', 'lit-knowledge')
+  setEdgeClass('e-truth-kl', 'lit')
+  setEdgeClass('e-truth-kr', 'lit')
+  setEdgeClass('e-kl-kr', 'lit')
+  setMantra('m-knowledge')
+  setPred('pred-resonance', kernel.resonance('trust','knowledge') ? 'valid' : 'invalid')
+  setAPL('apl-3')
+  await delay(500)
+
+  // Step 5 — geometry
+  setNodeClass('node-crl', 'lit-creation')
+  setNodeClass('node-crr', 'lit-creation')
+  setEdgeClass('e-kl-con', 'lit')
+  setEdgeClass('e-kr-con', 'lit')
+  setEdgeClass('e-kl-crl', 'lit')
+  setEdgeClass('e-kr-crr', 'lit')
+  setEdgeClass('e-crl-crr', 'lit')
+  setMantra('m-creation')
+  setPred('pred-geometry', kernel.geometry_stable() ? 'valid' : 'invalid')
+  setAPL('apl-4')
+  await delay(500)
+
+  // Step 6 — foundation
+  setNodeClass('node-foundation', 'lit-foundation')
+  setEdgeClass('e-crl-fnd', 'lit')
+  setEdgeClass('e-crr-fnd', 'lit')
+  setEdgeClass('e-con-fnd', 'lit')
+  setMantra('m-foundation')
+  setAPL('apl-5')
+  await delay(500)
+
+  // Step 7 — meta_block(valid)
+  const valid = kernel.meta_block_valid()
+  setPred('pred-meta', valid ? 'valid' : 'invalid')
+  setAPL('apl-6')
+
+  if (valid) {
+    // Omega fires
+    omegaNode.style.opacity = '1'
+    omegaNode.querySelector('circle').style.r = '22'
+    omegaNode.querySelector('text').style.fontSize = '18px'
+
+    document.getElementById('tokenDisplay').classList.add('active')
+    document.getElementById('agentToken').className = 'agent-token valid'
+    document.getElementById('tokenStatus').textContent = '✓ meta_block(valid). — KERNEL ACTIVE'
+    document.getElementById('glyphRow').textContent = '☉ ⌹ ○ ◇ △ ⬡ Ω'
+
+    // Compute real SHA-256 WORM seal
+    const payload = `⟦Ω⟧☉⌹○◇△⬡|${Date.now()}|meta_block(valid)|source(one)|geometry(stable)`
+    const seal = await sha256(payload)
+
+    document.getElementById('wormSeal').className = 'worm-seal sealed'
+    document.getElementById('wormSeal').innerHTML =
+      `<span class="seal-prefix">☉⌹○◇△⬡ Ω</span>` +
+      `<span style="font-size:9px;letter-spacing:0.1em;color:var(--muted);display:block;margin-bottom:4px">SHA-256 WORM SEAL</span>` +
+      seal
+
+    document.getElementById('resultBanner').className = 'result-banner shown'
+  }
+
+  document.getElementById('runBtn').textContent = '▶ RUN AGAIN'
+  document.getElementById('runBtn').disabled = false
+  running = false
+}
+
+// Auto-run on load
+window.addEventListener('load', () => setTimeout(runBlock, 800))
+</script>
+</body>
+</html>

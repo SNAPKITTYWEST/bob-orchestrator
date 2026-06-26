@@ -8,7 +8,8 @@ const bootButton = document.getElementById('boot')
 const state = {
   model: localStorage.getItem('gitdos-model') || 'granite-code',
   endpoint: localStorage.getItem('gitdos-endpoint') || 'http://127.0.0.1:11434',
-  format: localStorage.getItem('gitdos-format') || 'auto',  // auto | ollama | openai
+  format: localStorage.getItem('gitdos-format') || 'auto',
+  osUrl: localStorage.getItem('gitdos-osurl') || 'https://collectivekitty.com',  // auto | ollama | openai
   worm: JSON.parse(localStorage.getItem('gitdos-worm') || '[]'),
   transcript: [],
   catcode: { violations: 0, checks: 0 }
@@ -86,6 +87,15 @@ async function run(raw) {
   if (command === 'OPEN' && args.toUpperCase() === 'SUPERREPO') return open('../super-repo/', '_self')
   if (command === 'SAVE') return saveTranscript()
   if (command === 'GIT') return git(args)
+  if (command === 'INSTALL') return showInstall()
+  if (command === 'TOOLS') return showTools()
+  if (command === 'OS') return setOsUrl(args)
+  if (command === 'READ') return osTool('read', { path: args, agent: 'forge' })
+  if (command === 'SEARCH') return osTool('search', { query: args, agent: 'forge', mode: 'content' })
+  if (command === 'BROWSE') return osTool('browse', { url: args, extract: 'text', agent: 'nova' })
+  if (command === 'LINKS') return osTool('browse', { url: args, extract: 'links', agent: 'nova' })
+  if (command === 'SHOT') return osTool('browse', { url: args, extract: 'screenshot', agent: 'nova' })
+  if (command === 'GLOB') return osTool('glob', { pattern: args, agent: 'forge' })
   if (command === 'ASK' || command === 'CHAT' || command === 'BRUN') return ask(args)
 
   return ask(raw)
@@ -96,9 +106,9 @@ function help() {
   print('  CATALOG              LIST DISK CATALOG')
   print('  ASK <PROMPT>         CHAT WITH BOB — GRANITE CODE ENGINE')
   print('  CHAT <PROMPT>        SAME AS ASK')
-  print('  BRUN <PROMPT>        RUN MODEL LIKE A DOS BINARY')
+  print('  BRUN <PROMPT>        RUN LIKE A DOS BINARY')
   print('  MODEL <TAG>          SET MODEL (DEFAULT: GRANITE-CODE)')
-  print('  ENDPOINT <URL>       SET ENDPOINT (OLLAMA OR VLLM)')
+  print('  ENDPOINT <URL>       SET OLLAMA ENDPOINT')
   print('  FORMAT <auto|ollama|openai>  SET API FORMAT')
   print('  STATUS               CHECK BACKEND STATUS')
   print('  CATCODE              SHOW GUARDRAIL STATS')
@@ -109,9 +119,20 @@ function help() {
   print('  GIT STATUS           SHOW REPO STATE')
   print('  SAVE                 DOWNLOAD TRANSCRIPT JSON')
   print('  HOME                 CLEAR SCREEN')
+  print('  INSTALL              ADD TO HOME SCREEN INSTRUCTIONS')
+  print('')
+  print('AGENT TOOLS (requires OS online):', 'system')
+  print('  TOOLS                LIST ALL AGENT TOOL CAPABILITIES')
+  print('  OS <URL>             SET OS API URL (DEFAULT: collectivekitty.com)')
+  print('  READ <path>          READ FILE VIA FORGE AGENT')
+  print('  SEARCH <query>       GREP REPO VIA FORGE AGENT')
+  print('  GLOB <pattern>       FILE PATTERN MATCH VIA FORGE AGENT')
+  print('  BROWSE <url>         CHROMIUM PAGE TEXT VIA NOVA AGENT')
+  print('  LINKS <url>          EXTRACT ALL LINKS FROM PAGE')
+  print('  SHOT <url>           SCREENSHOT PAGE (BASE64 PNG)')
   print('')
   print('BACKEND CONFIG:', 'system')
-  print('  OLLAMA:  MODEL granite-code | ENDPOINT http://127.0.0.1:11434')
+  print('  OLLAMA:  MODEL granite-code | ENDPOINT https://ollama.collectivekitty.com')
   print('  VLLM:    MODEL ibm-granite/granite-code-8b-instruct | ENDPOINT http://127.0.0.1:8000')
   print('           FORMAT openai')
 }
@@ -390,6 +411,97 @@ function saveTranscript() {
   link.download = 'apple-gitdos-transcript.json'
   link.click()
   URL.revokeObjectURL(url)
+}
+
+function showInstall() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  const isAndroid = /android/i.test(navigator.userAgent)
+  print('ADD GITDOS TO HOME SCREEN', 'system')
+  print('')
+  if (isIOS) {
+    print('iPHONE / iPAD:', 'system')
+    print('  1. TAP THE SHARE BUTTON (BOX WITH ARROW UP)')
+    print('  2. SCROLL DOWN → "ADD TO HOME SCREEN"')
+    print('  3. TAP "ADD" — GITDOS ICON APPEARS ON HOME SCREEN')
+    print('  4. OPEN FROM HOME SCREEN = FULL-SCREEN MODE')
+  } else if (isAndroid) {
+    print('ANDROID:', 'system')
+    print('  1. TAP MENU (THREE DOTS) IN CHROME')
+    print('  2. TAP "ADD TO HOME SCREEN" OR "INSTALL APP"')
+    print('  3. TAP "ADD" — GITDOS APPEARS AS AN APP')
+  } else {
+    print('DESKTOP (CHROME/EDGE):', 'system')
+    print('  LOOK FOR INSTALL ICON IN THE ADDRESS BAR (⊕)')
+    print('  OR MENU → "INSTALL GITDOS"')
+    print('')
+    print('iPHONE: SHARE BUTTON → ADD TO HOME SCREEN')
+    print('ANDROID: THREE DOTS → ADD TO HOME SCREEN')
+  }
+  print('')
+  print('URL: https://snapkittywest.github.io/bob-orchestrator/apple-gitdos/')
+  print('SHORTCUT SAVES: ENDPOINT, MODEL, WORM CHAIN (ALL LOCAL STORAGE)')
+}
+
+function showTools() {
+  print('AGENT TOOL CAPABILITIES', 'system')
+  print(`OS API: ${state.osUrl}`, 'system')
+  print('')
+  print('FORGE AGENT (builder):', 'system')
+  print('  READ <path>          FS READ — any file in the workspace')
+  print('  SEARCH <query>       GREP — all code/config/docs')
+  print('  GLOB <pattern>       FILE PATTERN MATCH (e.g. src/**/*.ts)')
+  print('  WRITE                (via console — not exposed in GitDOS)')
+  print('  BROWSE <url>         FULL CHROMIUM RENDER (text extract)')
+  print('')
+  print('NOVA AGENT (research):', 'system')
+  print('  BROWSE <url>         CHROMIUM PAGE TEXT')
+  print('  LINKS <url>          ALL LINKS FROM A PAGE')
+  print('  SHOT <url>           SCREENSHOT → BASE64 PNG')
+  print('')
+  print('TYPE "OS <URL>" TO POINT AT A DIFFERENT OS INSTANCE')
+  print('DEFAULT: https://collectivekitty.com')
+}
+
+function setOsUrl(value) {
+  if (!value) { print(`OS API: ${state.osUrl}`, 'system'); return }
+  state.osUrl = value.replace(/\/$/, '')
+  localStorage.setItem('gitdos-osurl', state.osUrl)
+  print(`OS API SET TO ${state.osUrl}`, 'system')
+}
+
+async function osTool(tool, payload) {
+  const wormEvent = await appendWorm('TOOL_CALL', { tool, ...payload })
+  print(`DISPATCHING ${tool.toUpperCase()} VIA ${(payload.agent || 'forge').toUpperCase()} / SEAL ${wormEvent.seal.slice(0, 16)}...`, 'seal')
+
+  try {
+    const r = await fetch(`${state.osUrl}/api/openkitty/tool`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool, ...payload })
+    })
+
+    if (!r.ok) {
+      if (r.status === 503) {
+        print('OS OFFLINE — OpenKitty server not running on localhost:9100', 'error')
+        print('START: cd snapkitty-ide && node openkitty-server.js', 'system')
+      } else {
+        throw new Error(`HTTP ${r.status}`)
+      }
+      await appendWorm('TOOL_ERROR', { tool, status: r.status })
+      return
+    }
+
+    const data = await r.json()
+    const out  = data.output ?? data.text ?? data.result ?? JSON.stringify(data)
+    const lines = String(out).split('\n')
+    for (const line of lines.slice(0, 80)) print(line)
+    if (lines.length > 80) print(`... (${lines.length - 80} more lines — use SAVE to download)`, 'system')
+    await appendWorm('TOOL_RESULT', { tool, lines: lines.length })
+
+  } catch (e) {
+    print(`I/O ERROR: ${e.message}`, 'error')
+    await appendWorm('TOOL_ERROR', { tool, error: e.message })
+  }
 }
 
 async function appendWorm(type, payload) {

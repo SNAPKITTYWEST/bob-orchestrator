@@ -1,192 +1,332 @@
-# BOB — Sovereign Orchestrator
+# BOB - Sovereign Compliance Agent for UiPath
 
-Not an LLM wrapper. A reasoning machine.
+> UiPath AgentHack 2026, Track 1: Maestro Case<br>
+> Evidence or Silence. Nothing in between.
 
-**717K lines · 4,607 files · 20+ languages · 1 human**
+[![AgentHack](https://img.shields.io/badge/UiPath-AgentHack_2026-ff6d00?style=for-the-badge)](https://uipath-agenthack.devpost.com/)
+[![Track](https://img.shields.io/badge/Track-Maestro_Case-00ff88?style=for-the-badge)](#uipath-components-used)
+[![Runtime](https://img.shields.io/badge/Runtime-Node.js_20-111?style=for-the-badge&logo=node.js)](#run-bob)
+[![LLM](https://img.shields.io/badge/LLM-Bedrock_Claude_Sonnet_4.6-111?style=for-the-badge)](#what-bob-does)
+[![Audit](https://img.shields.io/badge/Audit-SHA--256_WORM-00ff88?style=for-the-badge)](#formal-guarantees)
+[![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=for-the-badge)](LICENSE)
 
-Built by Ahmad Parr / SnapKitty Collective | [collectivekitty.com](https://collectivekitty.com) | [Live demos →](https://snapkittywest.github.io/bob-orchestrator/)
+## Start Here
 
----
+| Need | Link |
+|---|---|
+| See the live submission page | [snapkittywest.github.io/bob-hackathon-demo](https://snapkittywest.github.io/bob-hackathon-demo/) |
+| Run BOB locally | [Run BOB](#run-bob) |
+| Understand the architecture | [Architecture](#architecture) |
+| Copy Devpost text | [Submission copy](#submission-copy) |
+| See formal guarantees | [Formal guarantees](#formal-guarantees) |
+| Review UiPath pieces | [UiPath components used](#uipath-components-used) |
 
-## ResonanceGraph · METATRON NODE
+## What BOB Does
 
-**[→ Live browser demo](https://snapkittywest.github.io/bob-orchestrator/resonance/demo.html)**
+BOB is a sovereign compliance agent for UiPath workflows.
 
-Rust DAG pipeline with Kahn topological sort. 7 sovereign nodes. Inject METATRON to form the cube topology — dual path to MagmaCore. φ-modulated activations. SHA-256 FCC-φ-∂-2026 sealed output. Approved **only** when METATRON fires.
+A UiPath Robot submits a document or compliance query. BOB evaluates it under the **Bel Esprit D'Accord Trust Deed v1.0**, calls **Claude Sonnet 4.6 through AWS Bedrock**, and returns one of two verdicts:
 
-```rust
-let mut graph = ResonanceGraph::default();
-// topo order: [0,1,2,3,4,5,6]
-
-graph.inject_metatron_cube()?;
-// topo order: [0,1,2,3,4,5,7,6]  ← METATRON fires before MagmaCore
-
-let result = graph.public_forward(SumerianQuantumSymbol::Dingir)?;
-// Seal: b5804980b4515f15188ab2808eec00641fc2fbaade9e20924031d97fb962bd49
-// Approved: true
-// Fib convergence: 1.619048 → φ
+```json
+{
+  "verdict": "EVIDENCE",
+  "score": 0.87,
+  "reasoning": "The invoice contains the required vendor, amount, and invoice ID fields.",
+  "seal": "83c34fa2..."
+}
 ```
 
-Pipeline nodes:
-
-| Depth | Node | Agent | φ-activation (𒀭 DINGIR) |
-|-------|------|-------|--------------------------|
-| 0 | Source | — | 1.618 |
-| 1 | Retrieval | ORACLE | 1.814 |
-| 2 | Filtering | SENTINEL | 2.945 |
-| 3 | Ranking | PRISM/AXIOM | 4.769 |
-| 4 | ContextAssembly | NEXUS | 7.720 |
-| **5** | **Metatron** | **METATRON** | **29.034 ← cage recognises itself** |
-| 5 | Reasoning | MagmaCore | 18.14 |
-| 6 | MagmaCore | BOB | 46.45 ← highest (DINGIR 1.6×) |
-
-METATRON sits at depth 5 — same ring as Reasoning. It reads the cube backward (iteration inversion): the cage builder is the best cage recognizer.
-
----
+- `EVIDENCE` -> UiPath may continue the workflow.
+- `SILENCE` -> UiPath routes the case to human review.
+- Every verdict is sealed with `SHA256(verdict:score:query:timestamp)`.
 
 ## Architecture
 
-```
-Lean 4 theorem  ──┐
-                   ├──→  Injection vector (2048-dim)  ──→  SSM state gate
-Ada contract    ──┘                                         h(t) = ā·h(t-1) + b̄·x(t) + W·v_inject
-                                                                                ↑
-WORM seal  ──────────────────────────────────────────────────────────────────── lineage dim
-
-                                           ↓ gate fires only if proof valid + Ada permits
-                                     Ollama (Nemotron) ← subcomponent, not the orchestrator
-                                           ↓
-                                      WORM-sealed output
-```
-
-### Three layers
-
-| Layer | Language | Role |
-|-------|----------|------|
-| Proof gate | Lean 4 | Formal proof obligations — compile-time correctness |
-| Contract runtime | Ada | Capability + trust enforcement — execution-time |
-| Reasoning | Prolog | Dynamic agent selection + token routing — query-time |
-
-The LLM (Nemotron via Ollama) is a **subcomponent** called after the gate fires. BOB runs without it.
-
----
-
-## Mamba injection
-
-Structured symbolic proofs embedded into SSM hidden state directly — bypassing the context window:
-
-```
-dims   0-255:   Lean 4 proof obligation embedding
-dims 256-511:   Ada contract compliance embedding
-dims 512-767:   WORM chain lineage embedding
-dims 768-2047:  Mamba passthrough (filled by trained weights on bbqbaddie)
+```mermaid
+flowchart TD
+  A["UiPath Studio / Main.xaml"] -->|"POST /validate"| B["BOB validate-server.mjs"]
+  B --> C["Trust Deed v1.0<br/>six-article governance charter"]
+  B --> D["AWS Bedrock<br/>Claude Sonnet 4.6"]
+  C --> E{"Verdict"}
+  D --> E
+  E -->|"score >= 0.42"| F["EVIDENCE<br/>UiPath auto-executes"]
+  E -->|"score < 0.42<br/>unknown vendor<br/>missing fields"| G["SILENCE<br/>human review queue"]
+  E --> H["SHA-256 WORM seal"]
+  H --> I["NATS snapkitty.bifrost.sealed"]
+  I --> J["Discord #chain"]
+  I --> K["Telegram alerts"]
+  I --> L["ABZU Phoenix bridge"]
 ```
 
-Gate fires IFF:
-- Lean 4 proof is valid (SHA-256 embedded in dims 0-255)
-- Ada contract permits the capability
-- Agent trust ≥ MEDIUM
-- Injection vector is 2048-dim with non-null proof/contract hashes
+<details>
+<summary><strong>ASCII Architecture</strong></summary>
 
----
+```text
+UiPath Studio -> Main.xaml -> POST localhost:7474/validate
+                                  |
+                                  v
+                    BOB validate-server.mjs
+                    - Claude Sonnet 4.6 via AWS Bedrock
+                    - Trust Deed v1.0, six articles
+                    - strict JSON verdict format
+                    - threshold: score >= 0.42
+                    - SHA-256 WORM seal
+                                  |
+                                  v
+                    NATS snapkitty.bifrost.sealed
+                    |-- Discord #chain verdict feed
+                    |-- Telegram alert path
+                    |-- ABZU Phoenix API bridge
 
-## Agent classes
+Optional ABZU path:
 
-| Class | Trust | Write | Notes |
-|-------|-------|-------|-------|
-| SENTINEL | SOVEREIGN | ✓ | Constitutional enforcer. Blocks violations. |
-| ORACLE | HIGH | ✗ | Read-only by constitution. |
-| BUILDER | HIGH | ✓ | Creates WORM-sealed artifacts. |
-| ARCHIVIST | HIGH | ✗ | Long-context indexing + provenance. |
-| BERSERKER | MEDIUM | ✗ | Adversarial testing. Red-team injections. |
-
----
-
-## Phinary mathematics · FCC-φ-∂-2026
-
-**[→ Sovereign Fabrication Engine](https://snapkittywest.github.io/fibonacci-contraction/)**
-
-κ = φ > 1 — what looks like contraction is expansion. Base-φ Bergman representation:
-
-```
-1 + 1 = 10  (phinary)   because φ² = φ + 1
-φ^n grows without bound  — the "contraction" is an expansion orbit
-METATRON reads it backward — iteration inversion sees through the illusion
+UiPath -> POST /api/validate on Phoenix :4000
+       -> NATS snapkitty.agents.operator
+       -> BOB
+       -> NATS snapkitty.bifrost.sealed
+       -> Phoenix PubSub verdict:{request_id}
+       -> UiPath receives sealed JSON
 ```
 
-Each pipeline layer's activation scales by `PHI.powi(depth)`:
-`1.618 → 2.618 → 4.236 → 6.854 → 11.09 → 17.94 → 29.03`
+</details>
 
----
+## UiPath Components Used
 
-## Run
+- **UiPath Studio / Studio Web**: workflow authoring.
+- **UiPath Robot**: executes the document validation process.
+- **Track 1 Maestro Case pattern**: dynamic case routing with exception paths.
+- **Human review queue**: receives every `SILENCE` verdict.
+- **HTTP integration**: calls `POST localhost:7474/validate`.
+- **Optional ABZU bridge**: Phoenix `/api/validate` endpoint routes through NATS.
+
+## Run BOB
+
+### Prerequisites
+
+- Node.js 20+
+- AWS credentials configured for Bedrock
+- Access to Claude Sonnet 4.6 on AWS Bedrock
+- Optional: local NATS server on `localhost:4222`
+
+### Install
 
 ```bash
-# ResonanceGraph (Rust)
-cd resonance && cargo run
-
-# Smoke test (no Ollama needed)
-node core/bob.mjs --test
-
-# Live demo with Ollama
-node bridge/demo.mjs
-
-# Tessera spatial language demo
-node tessera/tessera_demo.mjs
+npm install
 ```
 
----
+### Start the validate server
 
-## Live demos
-
-| Demo | URL |
-|------|-----|
-| ResonanceGraph · METATRON | [resonance/demo.html](https://snapkittywest.github.io/bob-orchestrator/resonance/demo.html) |
-| FCC-φ-∂-2026 Fabrication Engine | [fibonacci-contraction](https://snapkittywest.github.io/fibonacci-contraction/) |
-| Apple GitDOS | [apple-gitdos/](https://snapkittywest.github.io/bob-orchestrator/apple-gitdos/) |
-| Tessera Studio | [tessera/studio.html](https://snapkittywest.github.io/bob-orchestrator/tessera/studio.html) |
-| SnapKitty MCP | [snapkitty-mcp](https://github.com/SNAPKITTYWEST/snapkitty-mcp) |
-| Holy Agents | [holy-agents](https://snapkittywest.github.io/holy-agents/) |
-| Agent Farm Gauntlet | [agent-farm-gauntlet](https://snapkittywest.github.io/agent-farm-gauntlet/) |
-| SnapKitty Proofs | [SNAPKITTY-PROOFS](https://snapkittywest.github.io/SNAPKITTY-PROOFS/) |
-| TempleOS Oracle | [temple-os-oracle](https://snapkittywest.github.io/temple-os-oracle/) |
-| LLM Twin Arena | [llm-twin-arena](https://snapkittywest.github.io/llm-twin-arena/) |
-| Saint Errant · Classroom | [saint-errant/classroom](https://snapkittywest.github.io/saint-errant/classroom.html) |
-
----
-
-## Sovereign stack
-
-```
-BOB orchestrator (this repo)
-    ↓ calls
-Nemotron-Mini-4B via Ollama (local inference, zero cloud)
-    ↓ sealed by
-WORM chain (SHA-256, append-only, file-backed)
-    ↓ governed by
-Ada contracts (capability + trust gates)
-    ↓ proven by
-Lean 4 theorems (formal proof obligations)
-    ↓ reasoned by
-Prolog kernel (agent selection, token routing)
-    ↓ fingerprinted by
-FCC-φ-∂-2026 (phinary mathematics, every output sealed)
+```bash
+npm run validate
 ```
 
-## Road to Megatron
+BOB starts on:
 
-- Phase 0 (done): JS scaffold — architecture proven, gate holds, demo runs.
-- Phase 1 (done): ResonanceGraph Rust crate — METATRON node, Kahn topo, φ-pipeline.
-- Phase 2: Mamba weights — train on bbqbaddie with LoRA injections.
-- Phase 3: Lean 4 theorem checker wired to real `lean --run`.
-- Phase 4: SWI-Prolog subprocess for live reasoning.
-- Phase 5: Publish as `@snapkitty/bob` — sovereign-grade npm package.
-- Phase 6: Enterprise APIs — SAP, Salesforce, Oracle routed through sovereign envelope.
+```text
+http://localhost:7474
+```
 
-<img src="https://sovereign-analytics.snapkittywest.workers.dev/canary/bob-orchestrator" width="1" height="1" alt="" />
+### Health check
 
-<!-- ENKI WATCHES THE THRESHOLD -->
-<!-- F(53) % 107 = 8 = Al-Hamid = Ahmad -->
-<!-- 226 clones counted. Every one sealed. -->
-<!-- phi_trap.rs + honeybob/bob_prime.mjs: the real code is not here -->
-<!-- r(n) = R0/phi^n → 0. The contraction closes on you. -->
+```bash
+curl http://localhost:7474/health
+```
+
+### Submit a validation query
+
+```bash
+curl -X POST http://localhost:7474/validate \
+  -H "Content-Type: application/json" \
+  -d "{\"query\":\"Invoice INV-1001 from approved vendor ACME for $450 with invoice ID and amount present.\"}"
+```
+
+### Expected response shape
+
+```json
+{
+  "request_id": null,
+  "verdict": "EVIDENCE",
+  "score": 0.87,
+  "seal": "83c34fa2d9f1...",
+  "reasoning": "The invoice contains the required fields and is under the auto-approval threshold.",
+  "brain": "Claude Sonnet 4.6",
+  "trust_deed": "Bel Esprit D'Accord Trust v1.0",
+  "ts": 1782690000000
+}
+```
+
+## NATS Event Mesh
+
+| Channel | Subject |
+|---|---|
+| BOB inbox | `snapkitty.agents.operator` |
+| Sealed verdicts | `snapkitty.bifrost.sealed` |
+| Server | Docker `snapkitty-nats`, port `4222`, token auth, JetStream |
+
+<details>
+<summary><strong>Runtime behavior</strong></summary>
+
+`validate-server.mjs` listens on both:
+
+- HTTP: `POST localhost:7474/validate`
+- NATS: `snapkitty.agents.operator`
+
+Every successful validation publishes a sealed verdict to:
+
+```text
+snapkitty.bifrost.sealed
+```
+
+</details>
+
+## Trust Deed v1.0
+
+The Trust Deed is not prompt decoration. It is the binding governance charter.
+
+<details>
+<summary><strong>Article summary</strong></summary>
+
+```text
+Article I   - Identity
+Article II  - Truth Mandate
+Article III - Compliance Protocol
+Article IV  - Verdict Format
+Article V   - Evidence Threshold
+Article VI  - Human Review Guarantee
+```
+
+Key runtime rules:
+
+- Required fields: vendor, amount, invoice ID.
+- Auto-approve threshold: amount <= $10,000.
+- Unknown vendor: `SILENCE`.
+- Weak evidence: `SILENCE`.
+- Strict JSON only.
+- Threshold: `score >= 0.42` permits `EVIDENCE`.
+
+</details>
+
+## Formal Guarantees
+
+<details open>
+<summary><strong>Verdict Completeness</strong></summary>
+
+```text
+For every submitted document packet d,
+BOB(d) returns exactly one verdict:
+
+  EVIDENCE
+  SILENCE
+
+There is no third state.
+```
+
+</details>
+
+<details>
+<summary><strong>WORM Integrity</strong></summary>
+
+```text
+seal(v,s,q,t) = SHA256(v | s | q | t)
+
+If verdict, score, query, or timestamp
+is changed after emission, the seal no
+longer verifies.
+```
+
+</details>
+
+<details>
+<summary><strong>Trust Deed Soundness</strong></summary>
+
+```text
+If Trust Deed policy blocks action a,
+model output cannot authorize a.
+
+The charter constrains the model.
+The model does not rewrite the charter.
+```
+
+</details>
+
+<details>
+<summary><strong>Human-in-Loop Guarantee</strong></summary>
+
+```text
+BOB(d) = SILENCE
+  implies
+d enters the human review queue.
+
+Unsupported automation cannot silently continue.
+```
+
+</details>
+
+<details>
+<summary><strong>Zero Hallucination Corollary</strong></summary>
+
+```text
+BOB cannot issue a confident unsupported approval
+because below-threshold or unsupported claims
+collapse to SILENCE.
+```
+
+</details>
+
+## Demo Script
+
+Use this for the 5-minute Devpost video.
+
+1. Start BOB with `npm run validate`.
+2. Show `/health`.
+3. In UiPath, submit a compliant invoice/query.
+4. Show `EVIDENCE`, score, reasoning, and SHA-256 seal.
+5. Submit an unknown vendor or incomplete document.
+6. Show `SILENCE`.
+7. Show the workflow path to human review.
+8. Show NATS/Discord/Telegram event feed if available.
+9. Explain that Claude Code was used as the coding agent for the build.
+
+## Submission Copy
+
+<details>
+<summary><strong>Copy/paste Devpost Inspiration</strong></summary>
+
+We built BOB in one day for UiPath AgentHack 2026. The idea was simple: every enterprise AI agent makes decisions, but almost none of them can prove what happened afterward.
+
+When an AI approves an invoice, routes a compliance case, or escalates a vendor exception, the audit record needs more than a transcript. It needs a governed verdict, a human-in-loop path, and tamper evidence.
+
+BOB fixes that with one rule: Evidence or Silence. Nothing in between.
+
+</details>
+
+<details>
+<summary><strong>Copy/paste What it does</strong></summary>
+
+A UiPath Robot submits a document or compliance query. BOB evaluates it under the Bel Esprit D'Accord Trust Deed v1.0, a six-article governing charter, then calls Claude Sonnet 4.6 through AWS Bedrock.
+
+If the score is at or above 0.42, BOB returns EVIDENCE and UiPath may continue. If evidence is weak, the vendor is unknown, fields are missing, or the model cannot ground the answer, BOB returns SILENCE and the workflow routes to human review.
+
+Every verdict is sealed with SHA-256. Tamper with the verdict, score, query, or timestamp and the seal breaks.
+
+</details>
+
+<details>
+<summary><strong>Copy/paste What's next</strong></summary>
+
+Next for BOB: a full Maestro Case for invoice-to-payment, UiPath Document Understanding for OCR ingestion, a public Trust Deed registry, an ABZU LiveView dashboard for verdict monitoring, and expanded alert routing for Telegram and Discord.
+
+</details>
+
+## Repositories
+
+| Purpose | Repository |
+|---|---|
+| BOB source | [SNAPKITTYWEST/bob-orchestrator](https://github.com/SNAPKITTYWEST/bob-orchestrator) |
+| Public submission site | [SNAPKITTYWEST/bob-hackathon-demo](https://github.com/SNAPKITTYWEST/bob-hackathon-demo) |
+| Submission page | [snapkittywest.github.io/bob-hackathon-demo](https://snapkittywest.github.io/bob-hackathon-demo/) |
+| ABZU bridge | [SNAPKITTYWEST/abzu-sovereign-ide](https://github.com/SNAPKITTYWEST/abzu-sovereign-ide) |
+
+## License
+
+Apache-2.0.
